@@ -250,6 +250,7 @@ body {
     resize: none;
     outline: none;
     box-shadow: none !important;
+    padding-left: 0;
 }
 
 .new-quack-icon {

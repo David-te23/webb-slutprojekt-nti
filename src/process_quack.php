@@ -12,5 +12,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
     }
 }
 
-header("Location: index.php");
+header("Location: ../public/index.php");
 exit;
