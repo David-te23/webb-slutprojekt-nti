@@ -29,18 +29,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // multiple images preview
-    document.getElementById('quack-images').addEventListener('change', function(e) {
-        const container = document.getElementById('img-preview-container');
-        container.innerHTML = '';
-        Array.from(e.target.files).forEach(file => {
+    //File upload and preview
+    const fileInput = document.getElementById('quack-images');
+    const container = document.getElementById('img-preview-container');
+    const quackForm = fileInput.closest('form');
+    let allFiles = [];
+
+    fileInput.addEventListener('change', function(e) {
+        const newFiles = Array.from(e.target.files);
+        
+        // limit: Max 4 files
+        if (allFiles.length + newFiles.length > 4) {
+            alert("You can upload a maximum of 4 files per quack!");
+            return;
+        }
+
+        newFiles.forEach(file => {
+            allFiles.push(file);
+
             const reader = new FileReader();
             reader.onload = function(event) {
                 const div = document.createElement('div');
-                div.innerHTML = `<img src="${event.target.result}" style="width:80px;height:80px;object-fit:cover;" class="rounded shadow-sm">`;
+                div.className = 'position-relative';
+                div.innerHTML = `
+                    <img src="${event.target.result}" class="rounded shadow-sm preview-img">
+                    <button type="button" class="remove-selected-btn btn-close position-absolute top-0 end-0 bg-white rounded-circle p-1" 
+                            aria-label="Remove"></button>
+                `;
+
+                // Remove selected image
+                div.querySelector('button').onclick = () => {
+                    allFiles = allFiles.filter(f => f !== file);
+                    div.remove();
+                };
+
                 container.appendChild(div);
             }
             reader.readAsDataURL(file);
         });
+
+        // reset input so you can select same file name again.
+        fileInput.value = '';
+    });
+
+    // before form gets sent, pack allFiles into the real input
+    quackForm.addEventListener('submit', function(e) {
+        if (allFiles.length > 0) {
+            const dataTransfer = new DataTransfer();
+            allFiles.forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+        }
     });
 });

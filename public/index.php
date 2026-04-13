@@ -22,9 +22,9 @@ $stmt->execute();
 $quacks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($quacks as &$quack) {
-    $imgStmt = $dbconn->prepare("SELECT image_path FROM quack_images WHERE quack_id = ?");
+    $imgStmt = $dbconn->prepare("SELECT image_path, file_type FROM quack_images WHERE quack_id = ?");
     $imgStmt->execute([$quack['id']]);
-    $quack['images'] = $imgStmt->fetchAll(PDO::FETCH_COLUMN);
+    $quack['images'] = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 }
 unset($quack);
 ?>
@@ -54,7 +54,7 @@ unset($quack);
                         <!-- img upload -->
                         <label for="quack-images" class="btn btn-link p-0 text-success new-quack-icon">
                             <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M9 0H2V16H14V5L9 0ZM7 6V8H5V10H7V12H9V10H11V8H9V6H7Z" fill="#000000"></path> </g></svg>
-                            <input type="file" id="quack-images" name="quack_images[]" accept="image/*" class="d-none">
+                            <input type="file" id="quack-images" name="quack_images[]" accept="image/*" class="d-none" multiple>
                         </label>
                         <!-- emoji btn -->
                         <button type="button" id="emoji-trigger" class="btn btn-link p-0 text-success new-quack-icon">
@@ -83,13 +83,21 @@ unset($quack);
                 <p class="mt-2 fs-5"><?= htmlspecialchars($quack['content']) ?></p>
 
                 <!-- eventuella bilder för inlägget -->
-                <?php if (!empty($quack['images'])) : ?>
-                    <div class="quack-images-grid d-flex flex-wrap gap-2 mt-2">
-                        <?php foreach ($quack['images'] as $imagePath): ?>
-                            <img src="../<?= htmlspecialchars($imagePath) ?>" 
-                                class="img-fluid rounded border shadow-sm quack-img">
-                        <?php endforeach; ?>
+                <?php if (!empty($quack['images'])) : 
+                $imgCount = count($quack['images']);
+                $gridClass = ($imgCount > 4) ? 'grid-4' : 'grid-' . $imgCount;
+                ?>
+                <div class="quack-image-gallery <?= $gridClass ?> mt-2">
+                <?php foreach ($quack['images'] as $image): ?>
+                    <div class="gallery-item">
+                        <?php if (str_contains($image['file_type'], 'video')): ?>
+                            <video src="../<?= htmlspecialchars($image['image_path']) ?>" controls></video>
+                        <?php else: ?>
+                            <img src="../<?= htmlspecialchars($image['image_path']) ?>">
+                        <?php endif; ?>
                     </div>
+                <?php endforeach; ?>
+                </div>
                 <?php endif; ?>
                 <div class="d-flex gap-5 mt-3 text-muted">
                     <span class="action-icon d-flex align-items-center gap-1">

@@ -278,11 +278,56 @@ body {
     z-index: 1000;
 }
 
-.quack-img {
-    max-height: 350px;
+.preview-img {
+    width:80px;
+    height:80px;
+    object-fit:cover;
+}
+
+.quack-image-gallery {
+    display: grid;
+    gap: 2px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e1e8ed;
+    aspect-ratio: 16 / 9; 
+    width: 100%;
+    max-width: 500px;
+}
+
+.gallery-item img,
+.gallery-item video {
+    width: 100% !important;
+    height: 100% !important;
     object-fit: cover;
-    flex: 1 1 calc(50% - 10px);
-    min-width: 200px;
+    display: block;
+}
+
+/* Logik för olika antal bilder */
+.grid-1 { grid-template-columns: 1fr; }
+
+.grid-2 { grid-template-columns: 1fr 1fr; }
+
+.grid-3 {
+    grid-template-columns: 1.2fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+.grid-3 .gallery-item:first-child {
+    grid-row: span 2;
+}
+
+.grid-4 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.grid-2, .grid-3, .grid-4 {
+    grid-auto-rows: 1fr;
+}
+
+.remove-selected-btn {
+    font-size: 0.5rem;
+    margin: 2px;
 }
 
 @media (max-width: 991.98px) {
