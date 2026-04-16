@@ -290,7 +290,6 @@ body {
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid #e1e8ed;
-    aspect-ratio: 16 / 9; 
     width: 100%;
     max-width: 500px;
 }
@@ -329,6 +328,15 @@ body {
     font-size: 0.5rem;
     margin: 2px;
 }
+
+.like-btn.is-liked svg,
+.like-btn.is-liked svg path {
+    fill: #1ba926;
+}
+.like-btn.is-liked .like-count {
+    color: #1ba926;
+}
+
 
 @media (max-width: 991.98px) {
     .site-nav {

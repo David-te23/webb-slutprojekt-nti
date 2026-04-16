@@ -80,4 +80,26 @@ document.addEventListener('DOMContentLoaded', () => {
             fileInput.files = dataTransfer.files;
         }
     });
+
+    // Like function AJAX script for live update
+    document.querySelectorAll('.like-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const quackId = this.getAttribute('data-quack-id');
+            const countSpan = this.querySelector('.like-count');
+    
+            fetch('actions/like_handler.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `quack_id=${quackId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    countSpan.innerText = data.new_count;
+                    this.classList.toggle('is-liked', data.is_liked);
+                }
+            });
+        });
+    });
+    
 });
