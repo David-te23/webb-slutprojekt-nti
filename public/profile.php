@@ -28,18 +28,38 @@ $counts = $countStmt->fetch(PDO::FETCH_ASSOC);
 //fetch last 7 days of quacks (chart)
 $chartStmt = $dbconn->prepare("
     SELECT
-        DATE_FORMAT(created_at, '%a') as day,
+        DATE(created_at) as day,
         COUNT(*) as count
     FROM quacks
-    WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-    GROUP BY day, DATE(created_at)
-    ORDER BY DATE(created_at) ASC
+    WHERE user_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+    GROUP BY day
+    ORDER BY day ASC
 ");
 $chartStmt->execute([$viewUserId]);
 $chartRaw = $chartStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$days = array_column($chartRaw, 'day');
-$postCounts = array_column($chartRaw, 'count');
+$days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+$daysLabels = [];
+$postCounts = [];
+
+for ($i = 6; $i >= 0; $i--) {
+    $ts = strtotime("-$i days");
+    $dateKey = date('Y-m-d', $ts);
+
+    $dayIndex = (int)date('N', $ts) -1;
+    $dayName = ($i === 0) ? "Today" : $days[$dayIndex];
+
+    $count = 0;
+    foreach ($chartRaw as $row) {
+        if ($row['day'] == $dateKey) {
+            $count = (int)$row['count'];
+            break;
+        }
+    }
+
+    $daysLabels[] = $dayName;
+    $postCounts[] = $count;
+}
 
 //fetch quacks for specific user
 $quackStmt = $dbconn->prepare("
@@ -80,8 +100,8 @@ unset($q); //clean up reference
                     <p class="mt-2"><?= htmlspecialchars($user['bio'] ?? 'No bio yet...') ?></p>
 
                     <div class="profile-stats text-white">
-                        <span class="me-3"><strong><?= $counts['following'] ?></strong>Following</span>
-                        <span class="me-3"><strong><?= $counts['followers'] ?></strong>Followers</span>
+                        <span class="me-3"><strong><?= $counts['following'] ?></strong> Following</span>
+                        <span class="me-3"><strong><?= $counts['followers'] ?></strong> Followers</span>
                         <p class="text-white-50 small mt-2">Joined: <?= date("F Y", strtotime($user['created_at']))?></p>
                     </div>
                  </div>
@@ -98,7 +118,9 @@ unset($q); //clean up reference
     <section class="profile-chart-section mb-4 text-center">
         <h5 class="text-white mb-4"><?= htmlspecialchars($user['display_name']) ?>'s weekly quacktivity</h5>
         <div class="chart-holder">
-            <canvas id="quackChart"></canvas>
+            <canvas id="quackChart"
+                    data-days='<?= json_encode($daysLabels) ?>'
+                    data-counts='<?= json_encode($postCounts) ?>'></canvas>
         </div>
     </section>
 
