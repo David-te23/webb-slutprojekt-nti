@@ -1,6 +1,6 @@
 <?php 
 session_start();
-require_once __DIR__ . '../../database/db.php';
+require_once __DIR__ . '/../../database/db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['username'] = $user['username'];
             $_SESSION['is_admin'] = $user['is_admin'];
 
-            header("Location: ../public/index.php");
+            header("Location: ../../public/index.php");
             exit;
         } else {
             $error = "Incorrect username or password.";

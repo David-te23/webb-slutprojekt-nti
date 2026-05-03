@@ -83,6 +83,15 @@ foreach ($quacks as &$q) {
     $q['images'] = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 }
 unset($q); //clean up reference
+
+$isFollowing = false;
+if ($viewUserId != $_SESSION['user_id']) {
+    $followCheck = $dbconn->prepare("SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?");
+    $followCheck->execute([$_SESSION['user_id'], $viewUserId]);
+    $isFollowing = (bool)$followCheck->fetch();
+}
+
+require_once __DIR__ . '/../includes/quack_time_formatter.php';
 ?>
 
 <div class="profile-main-wrapper">
@@ -100,17 +109,34 @@ unset($q); //clean up reference
                     <p class="mt-2"><?= htmlspecialchars($user['bio'] ?? 'No bio yet...') ?></p>
 
                     <div class="profile-stats text-white">
-                        <span class="me-3"><strong><?= $counts['following'] ?></strong> Following</span>
-                        <span class="me-3"><strong><?= $counts['followers'] ?></strong> Followers</span>
+                        <span class="me-3"><strong id="following-count"><?= $counts['following'] ?></strong> Following</span>
+                        <span class="me-3"><strong id="follower-count"><?= $counts['followers'] ?></strong> Followers</span>
                         <p class="text-white-50 small mt-2">Joined: <?= date("F Y", strtotime($user['created_at']))?></p>
                     </div>
                  </div>
             </div>
-            <?php if ($viewUserId == $_SESSION['user_id']): ?>
-                <div class="text-end">
+            <div class="text-end d-flex flex-column gap-2">
+                <?php if ($viewUserId == $_SESSION['user_id']): ?>
+                    <!-- om det är ens egna profil -->
                     <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold mb-2">Edit Profile</button>
-                </div>
-                <?php endif; ?>
+                <?php else: ?>
+                    <!-- om det inte är ens egna profil -->
+                    <div class="d-flex gap-2">
+                        <!-- message knapp -->
+                        <a href="messages.php?user_id=<?= $viewUserId ?>" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+                            <i class="bi bi-envelope"></i> Message
+                        </a>
+
+                        <!-- follow/unfollow knapp -->
+                        <button id="follow-btn" 
+                                data-user-id="<?= $viewUserId ?>" 
+                                data-action="<?= $isFollowing ? 'unfollow' : 'follow' ?>"
+                                class="btn <?= $isFollowing ? 'btn-outline-danger' : 'btn-light' ?> btn-sm rounded-pill px-4 fw-bold">
+                            <?= $isFollowing ? 'Unfollow' : 'Follow' ?>
+                        </button>
+                    </div>
+                <?php endif; ?> 
+            </div>
         </div>
     </section>
     
@@ -140,7 +166,12 @@ unset($q); //clean up reference
                             <div class="flex-grow-1 text-start">
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="fw-bold text-dark"><?= htmlspecialchars($quack['display_name']) ?></span>
-                                    <span class="text-muted small">@<?= htmlspecialchars($quack['username']) ?> &bull; <?= date('H:i', strtotime($quack['created_at'])) ?></span>
+                                    <span class="text-muted small">
+                                        @<?= htmlspecialchars($quack['username']) ?> &bull;
+                                        <span title="<?= date('Y-m-d H:i', strtotime($quack['created_at'])) ?>">
+                                         <?= formatQuackTime($quack['created_at']) ?>
+                                        </span>
+                                        </span>
                                 </div>
                                 <p class="mt-1 mb-0 fs-6 text-dark"><?= htmlspecialchars($quack['content']) ?></p>
 

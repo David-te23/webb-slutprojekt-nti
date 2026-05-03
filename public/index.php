@@ -30,6 +30,8 @@ foreach ($quacks as &$quack) {
     $quack['images'] = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 }
 unset($quack);
+
+require_once __DIR__ . '/../includes/quack_time_formatter.php';
 ?>
 
 <div class="p-3 rounded shadow-sm feed-container">
@@ -48,7 +50,7 @@ unset($quack);
     <div class="create-quack-card bg-white p-3 rounded shadow-sm mb-4">
         <div class="d-flex gap-3">
             <img src="<?= getPfpPath($currentUser['profile_image']) ?>" class="profile-pic-placeholder">
-            <form action="../src/process_quack.php" method="POST" enctype="multipart/form-data" class="flex-grow-1">
+            <form action="../actions/process_quack.php" method="POST" enctype="multipart/form-data" class="flex-grow-1">
                 <textarea id="quack-textarea" name="quack_content" rows="1" class="form-control border-0 fs-5 mb-2" placeholder="What is quacking?" required maxlength="280"></textarea>
                 <!-- selected img preview-->
                 <div id="img-preview-container" class="d-flex flex-wrap gap-2 mb-2"></div>
@@ -77,11 +79,16 @@ unset($quack);
     <?php foreach ($quacks as $quack) : ?>
     <div class="quack-card bg-white p-3 rounded shadow-sm mb-3">
         <div class="d-flex gap-3">
-            <img src="<?= getPfpPath($quack['profile_image']) ?>" class="profile-pic-placeholder bg-secondary-subtle">
+            <a href="profile.php?id=<?= $quack['user_id'] ?>">
+                <img src="<?= getPfpPath($quack['profile_image']) ?>" class="profile-pic-placeholder bg-secondary-subtle">
+            </a>
             <div class="flex-grow-1">
                 <div class="d-flex align-items-center gap-2">
+                    <a href="profile.php?id=<?= $quack['user_id'] ?>" class="text-decoration-none text-dark d-flex align-items-center gap-2">
                     <span class="fw-bold"><?= htmlspecialchars($quack['display_name']) ?></span>
-                    <span class="text-muted"><?= htmlspecialchars($quack['username']) ?> &bull; <?= date('H:i', strtotime($quack['created_at'])) ?></span>
+                    <span class="text-muted">@<?= htmlspecialchars($quack['username']) ?></span>
+                    </a>
+                    <span class="text-muted">&bull; <span title="<?= date('Y-m-d H:i', strtotime($quack['created_at'])) ?>"><?= formatQuackTime($quack['created_at']) ?></span></span>
                 </div>
                 <p class="mt-1 mb-0 fs-5"><?= htmlspecialchars($quack['content']) ?></p>
 

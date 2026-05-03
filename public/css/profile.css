@@ -34,3 +34,11 @@
 .profile-layout-wrapper {
     margin-bottom: 40px;
 }
+
+.follow-btn:hover {
+    transition: all 0.2s;
+}
+
+.btn-outline-danger:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}

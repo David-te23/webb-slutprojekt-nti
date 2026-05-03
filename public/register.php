@@ -12,7 +12,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <p class="login-subtitle">Create your account</p>
             </div>
 
-            <form action="../src/handle_register.php" method="POST">
+            <form action="../actions/handle_register.php" method="POST">
                 <div class="mb-3">
                     <label for="username" class="login-label">Username:</label>
                     <input type="text" name="username" id="username" class="form-control login-input" required>

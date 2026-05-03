@@ -4,6 +4,7 @@ require_once __DIR__ . '/../config/env.php';
 // Load the .env file
 $env = loadEnv(__DIR__ . '/../.env');
 
+date_default_timezone_set('Europe/Stockholm');
 
 $dbname = 'quacker';
 $hostname = 'localhost';

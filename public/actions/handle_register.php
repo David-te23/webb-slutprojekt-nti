@@ -1,5 +1,5 @@
 <?php 
-require_once __DIR__ . '../../database/db.php';
+require_once __DIR__ . '/../../database/db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ':is_admin' => 0
         ]);
 
-        header("Location: ../public/login.php");
+        header("Location: ../../public/login.php");
     } catch (PDOException $e) {
         if ($e->getCode() == 23000) {
             //echo "Username or email already exists.";

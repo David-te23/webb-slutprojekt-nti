@@ -50,6 +50,7 @@ if (isset($_SESSION['user_id'])) {
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
     <script src="js/app.js" defer></script>
     <script src="js/index.js" defer></script>
+    <script src="js/follow_ajax.js" defer></script>
     <script src="js/quacktivity.js" defer></script>
     
 </head>
