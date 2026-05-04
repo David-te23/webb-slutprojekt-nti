@@ -337,6 +337,27 @@ body {
     color: #1ba926;
 }
 
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.quack-card {
+    transition: background-color 0.2s;
+}
+
+.quack-card:hover {
+    background-color: #f8f9fa !important;
+}
+
+.z-2 {
+    position: relative;
+    z-index: 2;
+}
+
+.border-quack {
+    border-color: #46704B !important;
+}
+
 @media (max-width: 991.98px) {
     .site-nav {
         position: static !important;

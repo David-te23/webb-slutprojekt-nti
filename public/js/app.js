@@ -14,6 +14,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+document.addEventListener('DOMContentLoaded', function() {
+    const imageModal = document.getElementById('imageModal');
+    if (imageModal) {
+        const carousel = new bootstrap.Carousel(document.getElementById('quackCarousel'));
+        
+        // Lyssna på klick i galleriet för att byta bild i carouselen
+        document.querySelectorAll('[data-bs-target="#imageModal"]').forEach(item => {
+            item.addEventListener('click', function() {
+                const slideTo = parseInt(this.getAttribute('data-bs-slide-to'));
+                carousel.to(slideTo);
+            });
+        });
+    }
+});
+
+
 // live uppdatering av like knapp
 document.addEventListener('click', function(e) {
     // Hitta om klicket skedde på en like-knapp
