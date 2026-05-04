@@ -7,19 +7,43 @@ $quackId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 // Hämta det specifika inlägget med användardata
 $stmt = $dbconn->prepare("
-    SELECT q.*, u.username, u.display_name, u.profile_image,
-    (SELECT COUNT(*) FROM likes WHERE quack_id = q.id) as like_count,
-    (SELECT COUNT(*) FROM comments WHERE quack_id = q.id) as comment_count,
-    (SELECT COUNT(*) FROM quacks WHERE parent_id = q.id) as requack_count,
-    EXISTS(SELECT 1 FROM likes WHERE quack_id = q.id AND user_id = ?) as user_liked
+    SELECT 
+        q.id, q.content, q.created_at, q.user_id, q.parent_id,
+        u.username, u.display_name, u.profile_image,
+        -- Originaldata om det är en requack
+        orig_q.content AS orig_content,
+        orig_u.username AS orig_username,
+        orig_u.display_name AS orig_display_name,
+        orig_u.profile_image AS orig_profile_image,
+        orig_u.id AS orig_user_id,
+        -- Räknare (Peka på originalet om det är en requack)
+        (SELECT COUNT(*) FROM likes WHERE quack_id = COALESCE(q.parent_id, q.id)) as like_count,
+        (SELECT COUNT(*) FROM comments WHERE quack_id = COALESCE(q.parent_id, q.id)) as comment_count,
+        (SELECT COUNT(*) FROM quacks WHERE parent_id = COALESCE(q.parent_id, q.id) AND content IS NULL) as requack_count,
+        EXISTS(SELECT 1 FROM likes WHERE quack_id = COALESCE(q.parent_id, q.id) AND user_id = ?) as user_liked
     FROM quacks q
     JOIN users u ON q.user_id = u.id
+    LEFT JOIN quacks orig_q ON q.parent_id = orig_q.id
+    LEFT JOIN users orig_u ON orig_q.user_id = orig_u.id
     WHERE q.id = ?
 ");
 $stmt->execute([$_SESSION['user_id'] ?? 0, $quackId]);
 $quack = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$quack) {
+// Bestäm vad som ska visas (precis som i index)
+$isRequack = ($quack['content'] === null && $quack['parent_id'] !== null);
+$display = $isRequack ? [
+    'id' => $quack['parent_id'],
+    'content' => $quack['orig_content'],
+    'display_name' => $quack['orig_display_name'],
+    'username' => $quack['orig_username'],
+    'profile_image' => $quack['orig_profile_image'],
+    'user_id' => $quack['orig_user_id'],
+    'created_at' => $quack['created_at']
+] : $quack;
+
+
+if (!$display) {
     echo "<div class='container mt-5'><h2 class='text-white'>Quack not found.</h2></div>";
     require_once __DIR__ . '/../includes/footer.php';
     exit;
@@ -41,16 +65,16 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 
             <div class="quack-card bg-white p-4 rounded shadow">
                 <div class="d-flex gap-3 mb-3">
-                    <a href="profile.php?id=<?= $quack['user_id'] ?>">
-                    <img src="<?= getPfpPath($quack['profile_image']) ?>" class="profile-pic-placeholder">
+                    <a href="profile.php?id=<?= $display['user_id'] ?>">
+                    <img src="<?= getPfpPath($display['profile_image']) ?>" class="profile-pic-placeholder">
                     </a>
                     <div>
-                        <h5 class="fw-bold mb-0"><?= htmlspecialchars($quack['display_name']) ?></h5>
-                        <p class="text-muted small">@<?= htmlspecialchars($quack['username']) ?></p>
+                        <h5 class="fw-bold mb-0"><?= htmlspecialchars($display['display_name']) ?></h5>
+                        <p class="text-muted small">@<?= htmlspecialchars($display['username']) ?></p>
                     </div>
                 </div>
 
-                <p class="fs-4"><?= htmlspecialchars($quack['content']) ?></p>
+                <p class="fs-4"><?= htmlspecialchars($display['content']) ?></p>
 
                 
                 <?php if (!empty($images)): 
@@ -79,14 +103,15 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php endif; ?>
                 <hr>
                 <div class="d-flex justify-content-between text-muted">
-                    <span><?= date('H:i • M j, Y', strtotime($quack['created_at'])) ?></span>
+                    <span><?= date('H:i • M j, Y', strtotime($display['created_at'])) ?></span>
                 </div>
                 <div class="d-flex gap-5 mt-3 text-muted">
                     <span class="action-icon d-flex align-items-center gap-1">
                     <svg class="quack-icon" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>comment 5</title> <desc>Created with Sketch Beta.</desc> <defs> </defs> <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage"> <g id="Icon-Set-Filled" sketch:type="MSLayerGroup" transform="translate(-362.000000, -257.000000)" fill="#000000"> <path d="M388.667,257 L367.333,257 C364.388,257 362,259.371 362,262.297 L362,279.187 C362,282.111 364.055,284 367,284 L373.639,284 L378,289.001 L382.361,284 L389,284 C391.945,284 394,282.111 394,279.187 L394,262.297 C394,259.371 391.612,257 388.667,257" id="comment-5" sketch:type="MSShapeGroup"> </path> </g> </g> </g></svg>
                         <span class="align-middle"><?= $quack['comment_count'] ?></span>
                     </span>
-                    <span class="action-icon">
+                    <span class="action-icon requack-btn <?= $isRequack ? 'is-requacked' : '' ?>"
+                                data-quack-id="<?= $display['id'] ?>">
                     <svg class="quack-icon" fill="#000000" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M5 4a2 2 0 0 0-2 2v6H0l4 4 4-4H5V6h7l2-2H5zm10 4h-3l4-4 4 4h-3v6a2 2 0 0 1-2 2H6l2-2h7V8z"></path></g></svg>
                          <span class="align-middle"><?= $quack['requack_count'] ?></span>
                     </span>
@@ -128,7 +153,7 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                             WHERE c.quack_id = ? 
                             ORDER BY c.created_at DESC
                         ");
-                        $commentStmt->execute([$quackId]);
+                        $commentStmt->execute([$display['id']]);
                         $comments = $commentStmt->fetchAll(PDO::FETCH_ASSOC);
 
                         if (empty($comments)): ?>
