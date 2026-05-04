@@ -65,6 +65,7 @@ document.addEventListener('click', function(e) {
     e.preventDefault();
     const quackId = btn.dataset.quackId;
     const countEl = btn.querySelector('.requack-count');
+    const quackCard = btn.closest('.quack-card'); // Hitta hela inlägget
 
     const formData = new FormData();
     formData.append('quack_id', quackId);
@@ -76,9 +77,60 @@ document.addEventListener('click', function(e) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            countEl.textContent = data.newCount;
-            // Toggla en klass för att färga ikonen grön (Twitter-style)
-            btn.classList.toggle('is-requacked', data.status === 'added');
+            // 1. Om vi är på en profil och det var en requack som togs bort
+            // Vi kollar om "X requacked"-texten finns i kortet
+            const isRequackNote = quackCard.querySelector('.text-muted.small.fw-bold');
+            
+            if (data.status === 'removed' && isRequackNote) {
+                // Ta bort hela kortet med en snygg animation
+                quackCard.style.opacity = '0';
+                quackCard.style.transform = 'translateX(20px)';
+                quackCard.style.transition = 'all 0.3s ease';
+                
+                setTimeout(() => {
+                    quackCard.remove();
+                }, 300);
+            } else {
+                // Annars, bara uppdatera siffran och färgen (som på index)
+                countEl.textContent = data.newCount;
+                btn.classList.toggle('is-requacked', data.status === 'added');
+            }
         }
     });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    function setupEmojiPicker(triggerId, containerId, textareaId, pickerId) {
+        const trigger = document.getElementById(triggerId);
+        const container = document.getElementById(containerId);
+        const textarea = document.getElementById(textareaId);
+        const picker = document.getElementById(pickerId);
+
+        // Om något av elementen saknas
+        if (!trigger || !container || !textarea || !picker) return;
+
+        trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isVisible = container.style.display === 'block';
+            container.style.display = isVisible ? 'none' : 'block';
+        });
+
+        picker.addEventListener('emoji-click', event => {
+            textarea.value += event.detail.unicode;
+            container.style.display = 'none';
+            textarea.focus();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!trigger.contains(e.target) && !container.contains(e.target)) {
+                container.style.display = 'none';
+            }
+        });
+    }
+
+    // Körs på index.php
+    setupEmojiPicker('emoji-trigger', 'picker-container', 'quack-textarea', 'quack-picker');
+
+    // Körs på quack.php 
+    setupEmojiPicker('reply-emoji-trigger', 'reply-picker-container', 'reply-textarea', 'reply-picker');
 });

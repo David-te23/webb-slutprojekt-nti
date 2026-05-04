@@ -1,32 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Emoji picker
-    const trigger = document.querySelector('#emoji-trigger');
-    const textarea = document.querySelector('#quack-textarea');
-    const pickerContainer = document.querySelector('#picker-container');
-    const picker = document.querySelector('emoji-picker');
-
-    if (trigger && pickerContainer && textarea && picker) {
-        // Visa/dölj picker
-        trigger.addEventListener('click', (e) => {
-            e.preventDefault();
-            const isVisible = pickerContainer.style.display === 'block';
-            pickerContainer.style.display = isVisible ? 'none' : 'block';
-        });
-
-        // Lägg till emoji i textarea
-        picker.addEventListener('emoji-click', event => {
-            textarea.value += event.detail.unicode;
-            pickerContainer.style.display = 'none';
-        });
-
-        // Stäng om man klickar utanför
-        document.addEventListener('click', (e) => {
-            if (!trigger.contains(e.target) && !pickerContainer.contains(e.target)) {
-                pickerContainer.style.display = 'none';
-            }
-        });
-    }
-
+    
     // Filuppladdning och preview
     const fileInput = document.getElementById('quack-images');
     
@@ -83,4 +56,37 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    // All/Following tabs för quacks
+    const tabs = document.querySelectorAll('.feed-tab');
+    const feedContainer = document.getElementById('feed-container');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+
+            // Ändra utseende med CSS klass
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            // Enkel laddningseffekt
+            feedContainer.style.opacity = '0.5';
+
+            // Hämta den filtrerade feeden
+            fetch(`actions/fetch_feed.php?filter=${filter}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.text();
+                })
+                .then(html => {
+                    feedContainer.innerHTML = html;
+                    feedContainer.style.opacity = '1';
+                })
+                .catch(error => {
+                    console.error('Error fetching feed:', error);
+                    feedContainer.innerHTML = '<p class="text-white text-center">Failed to load quacks.</p>';
+                    feedContainer.style.opacity = '1';
+                });
+        });
+    });
 });
