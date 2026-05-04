@@ -6,27 +6,34 @@ $current_user_id = $currentUser['id'] ?? 0;
 
 $stmt = $dbconn->prepare("
     SELECT
-         q.*,
+         q.id, q.content, q.created_at, q.user_id, q.parent_id,
          u.username, u.display_name, u.profile_image,
-         COUNT(DISTINCT l.user_id) AS like_count,
-         COUNT(DISTINCT c.id) AS comment_count,
-         COUNT(DISTINCT r.id) AS requack_count,
-         EXISTS(SELECT 1 FROM likes WHERE quack_id = q.id AND user_id = :current_user_id) AS user_liked
+         -- Originaldata om det är en requack
+         orig_q.content AS orig_content,
+         orig_u.username AS orig_username,
+         orig_u.display_name AS orig_display_name,
+         orig_u.profile_image AS orig_profile_image,
+         orig_u.id AS orig_user_id,
+         -- Räknare (COALESCE ser till att vi räknar originalet om det är en requack)
+         (SELECT COUNT(*) FROM likes WHERE quack_id = COALESCE(q.parent_id, q.id)) AS like_count,
+         (SELECT COUNT(*) FROM comments WHERE quack_id = COALESCE(q.parent_id, q.id)) AS comment_count,
+         (SELECT COUNT(*) FROM quacks WHERE parent_id = COALESCE(q.parent_id, q.id) AND content IS NULL) AS requack_count,
+         EXISTS(SELECT 1 FROM likes WHERE quack_id = COALESCE(q.parent_id, q.id) AND user_id = :current_user_id) AS user_liked
     FROM quacks q
     JOIN users u ON q.user_id = u.id
-    LEFT JOIN likes l ON q.id = l.quack_id
-    LEFT JOIN comments c ON q.id = c.quack_id
-    LEFT JOIN quacks r ON q.id = r.parent_id
-    WHERE q.parent_id IS NULL
-    GROUP BY q.id
+    LEFT JOIN quacks orig_q ON q.parent_id = orig_q.id
+    LEFT JOIN users orig_u ON orig_q.user_id = orig_u.id
     ORDER BY q.created_at DESC
 ");
 $stmt->execute(['current_user_id' => $current_user_id]);
 $quacks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Hämta bilder (för både vanliga och originalet i requacks)
 foreach ($quacks as &$quack) {
+    // Om det är en requack, hämta bilderna för originalet (parent_id)
+    $targetId = $quack['parent_id'] ?? $quack['id'];
     $imgStmt = $dbconn->prepare("SELECT image_path, file_type FROM quack_images WHERE quack_id = ?");
-    $imgStmt->execute([$quack['id']]);
+    $imgStmt->execute([$targetId]);
     $quack['images'] = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 }
 unset($quack);
@@ -76,25 +83,44 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
     </div>
 
     <!-- Quack inlägg -->
-<?php foreach ($quacks as $quack) : ?>
+<?php foreach ($quacks as $quack) :
+    
+    $isRequack = ($quack['content'] === null && $quack['parent_id'] !== null);
+
+    $display = $isRequack ? [
+        'id' => $quack['parent_id'],
+        'user_id' => $quack['orig_user_id'],
+        'content' => $quack['orig_content'],
+        'display_name' => $quack['orig_display_name'],
+        'username' => $quack['orig_username'],
+        'profile_image' => $quack['orig_profile_image'],
+        'created_at' => $quack['created_at'] //när requacked gjordes
+    ] : $quack;
+    ?>
 <div class="quack-card bg-white p-3 rounded shadow-sm mb-3">
+    <?php if($isRequack) : ?>
+        <div class="text-muted small mb-2 ms-5 fw-bold">
+            <svg class="quack-icon" fill="#000000" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M5 4a2 2 0 0 0-2 2v6H0l4 4 4-4H5V6h7l2-2H5zm10 4h-3l4-4 4 4h-3v6a2 2 0 0 1-2 2H6l2-2h7V8z"></path></g></svg>
+            <?= htmlspecialchars($quack['display_name']) ?> requacked
+        </div>
+        <?php endif; ?>
     <div class="d-flex gap-3">
-        <a href="profile.php?id=<?= $quack['user_id'] ?>" class="position-relative z-2">
-            <img src="<?= getPfpPath($quack['profile_image']) ?>" class="profile-pic-placeholder bg-secondary-subtle">
+        <a href="profile.php?id=<?= $display['user_id'] ?>" class="position-relative z-2">
+            <img src="<?= getPfpPath($display['profile_image']) ?>" class="profile-pic-placeholder bg-secondary-subtle">
         </a>
         <div class="flex-grow-1">
             <!-- Namn-sektionen -->
             <div class="d-flex align-items-center gap-2 position-relative z-2">
-                <a href="profile.php?id=<?= $quack['user_id'] ?>" class="text-decoration-none text-dark d-flex align-items-center gap-2">
-                    <span class="fw-bold hover-underline"><?= htmlspecialchars($quack['display_name']) ?></span>
-                    <span class="text-muted">@<?= htmlspecialchars($quack['username']) ?></span>
+                <a href="profile.php?id=<?= $display['user_id'] ?>" class="text-decoration-none text-dark d-flex align-items-center gap-2">
+                    <span class="fw-bold hover-underline"><?= htmlspecialchars($display['display_name']) ?></span>
+                    <span class="text-muted">@<?= htmlspecialchars($display['username']) ?></span>
                 </a>
-                <span class="text-muted">&bull; <span title="<?= date('Y-m-d H:i', strtotime($quack['created_at'])) ?>"><?= formatQuackTime($quack['created_at']) ?></span></span>
+                <span class="text-muted">&bull; <span title="<?= date('Y-m-d H:i', strtotime($display['created_at'])) ?>"><?= formatQuackTime($display['created_at']) ?></span></span>
             </div>
 
             <!-- KLICKBAR DEL: Text och Bilder -->
             <div class="quack-content-clickable cursor-pointer" onclick="window.location.href='quack.php?id=<?= $quack['id'] ?>'">
-                <p class="mt-1 mb-0 fs-5"><?= htmlspecialchars($quack['content']) ?></p>
+                <p class="mt-1 mb-0 fs-5"><?= htmlspecialchars($display['content'] ?? '') ?></p>
 
                 <?php if (!empty($quack['images'])) : 
                     $imgCount = count($quack['images']);
@@ -121,9 +147,10 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
                     <svg class="quack-icon" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>comment 5</title> <desc>Created with Sketch Beta.</desc> <defs> </defs> <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage"> <g id="Icon-Set-Filled" sketch:type="MSLayerGroup" transform="translate(-362.000000, -257.000000)" fill="#000000"> <path d="M388.667,257 L367.333,257 C364.388,257 362,259.371 362,262.297 L362,279.187 C362,282.111 364.055,284 367,284 L373.639,284 L378,289.001 L382.361,284 L389,284 C391.945,284 394,282.111 394,279.187 L394,262.297 C394,259.371 391.612,257 388.667,257" id="comment-5" sketch:type="MSShapeGroup"> </path> </g> </g> </g></svg>
                         <span class="align-middle"><?= $quack['comment_count'] ?></span>
                     </span>
-                    <span class="action-icon">
+                    <span class="action-icon requack-btn <?= $isRequack ? 'is-requacked' : '' ?>"
+                                data-quack-id="<?= $display['id'] ?>">
                     <svg class="quack-icon" fill="#000000" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M5 4a2 2 0 0 0-2 2v6H0l4 4 4-4H5V6h7l2-2H5zm10 4h-3l4-4 4 4h-3v6a2 2 0 0 1-2 2H6l2-2h7V8z"></path></g></svg>
-                         <span class="align-middle"><?= $quack['requack_count'] ?></span>
+                         <span class="requack-count align-middle"><?= $quack['requack_count'] ?></span>
                     </span>
                     <span class="action-icon like-btn <?= $quack['user_liked'] ? 'is-liked' : '' ?>" data-quack-id="<?= $quack['id'] ?>">
                     <svg class="quack-icon" viewBox="0 -0.5 21 21" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>like [#1385]</title> <desc>Created with Sketch.</desc> <defs> </defs> <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"> <g id="Dribbble-Light-Preview" transform="translate(-259.000000, -760.000000)" fill="#000000"> <g id="icons" transform="translate(56.000000, 160.000000)"> <path d="M203,620 L207.200006,620 L207.200006,608 L203,608 L203,620 Z M223.924431,611.355 L222.100579,617.89 C221.799228,619.131 220.638976,620 219.302324,620 L209.300009,620 L209.300009,608.021 L211.104962,601.825 C211.274012,600.775 212.223214,600 213.339366,600 C214.587817,600 215.600019,600.964 215.600019,602.153 L215.600019,608 L221.126177,608 C222.97313,608 224.340232,609.641 223.924431,611.355 L223.924431,611.355 Z" id="like-[#1385]"> </path> </g> </g> </g> </g></svg>

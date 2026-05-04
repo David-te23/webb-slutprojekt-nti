@@ -56,3 +56,29 @@ document.addEventListener('click', function(e) {
     })
     .catch(err => console.error('Like error:', err));
     });
+
+//Requacks
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.requack-btn');
+    if (!btn) return;
+
+    e.preventDefault();
+    const quackId = btn.dataset.quackId;
+    const countEl = btn.querySelector('.requack-count');
+
+    const formData = new FormData();
+    formData.append('quack_id', quackId);
+
+    fetch('actions/requack_handler.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            countEl.textContent = data.newCount;
+            // Toggla en klass för att färga ikonen grön (Twitter-style)
+            btn.classList.toggle('is-requacked', data.status === 'added');
+        }
+    });
+});

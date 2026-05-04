@@ -337,6 +337,14 @@ body {
     color: #1ba926;
 }
 
+.requack-btn.is-requacked svg,
+.requack-btn.is-requacked svg path {
+    fill: #1ba926;
+}
+.requack-btn.is-requacked .requack-count {
+    color:#1ba926;
+}
+
 .cursor-pointer {
     cursor: pointer;
 }

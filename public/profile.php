@@ -63,26 +63,39 @@ for ($i = 6; $i >= 0; $i--) {
 
 //fetch quacks for specific user
 $quackStmt = $dbconn->prepare("
-    SELECT q.*, u.username, u.display_name, u.profile_image,
-    (SELECT COUNT(*) FROM likes WHERE quack_id = q.id) as like_count,
-    (SELECT COUNT(*) FROM comments WHERE quack_id = q.id) as comment_count,
-    (SELECT COUNT(*) FROM quacks WHERE parent_id = q.id) as requack_count,
-    EXISTS(SELECT 1 FROM likes WHERE quack_id = q.id AND user_id = ?) as user_liked
+    SELECT 
+        q.id, q.content, q.created_at, q.user_id, q.parent_id,
+        u.username, u.display_name, u.profile_image,
+        -- Originaldata om det är en requack
+        orig_q.content AS orig_content,
+        orig_q.created_at AS orig_created_at,
+        orig_u.username AS orig_username,
+        orig_u.display_name AS orig_display_name,
+        orig_u.profile_image AS orig_profile_image,
+        orig_u.id AS orig_user_id,
+        -- Räknare (COALESCE ser till att vi räknar originalet om det är en requack)
+        (SELECT COUNT(*) FROM likes WHERE quack_id = COALESCE(q.parent_id, q.id)) as like_count,
+        (SELECT COUNT(*) FROM comments WHERE quack_id = COALESCE(q.parent_id, q.id)) as comment_count,
+        (SELECT COUNT(*) FROM quacks WHERE parent_id = COALESCE(q.parent_id, q.id) AND content IS NULL) as requack_count,
+        EXISTS(SELECT 1 FROM likes WHERE quack_id = COALESCE(q.parent_id, q.id) AND user_id = ?) as user_liked
     FROM quacks q
     JOIN users u ON q.user_id = u.id
+    LEFT JOIN quacks orig_q ON q.parent_id = orig_q.id
+    LEFT JOIN users orig_u ON orig_q.user_id = orig_u.id
     WHERE q.user_id = ?
     ORDER BY q.created_at DESC
 ");
 $quackStmt->execute([$_SESSION['user_id'], $viewUserId]);
 $quacks = $quackStmt->fetchAll(PDO::FETCH_ASSOC);
 
-//fetch images for the quacks (mapping them to quack id)
-foreach ($quacks as &$q) {
+// Hämta bilder (för både vanliga och originalet i requacks)
+foreach ($quacks as &$quack) {
+    $targetId = $quack['parent_id'] ?? $quack['id'];
     $imgStmt = $dbconn->prepare("SELECT image_path, file_type FROM quack_images WHERE quack_id = ?");
-    $imgStmt->execute([$q['id']]);
-    $q['images'] = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
+    $imgStmt->execute([$targetId]);
+    $quack['images'] = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 }
-unset($q); //clean up reference
+unset($quack); //städa upp referenser
 
 $isFollowing = false;
 if ($viewUserId != $_SESSION['user_id']) {
@@ -158,22 +171,44 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
                     <p>This user hasn't quacked yet!</p>
                 </div>
             <?php else: ?>
-                <?php foreach ($quacks as $quack) : ?>
+                <?php foreach ($quacks as $quack) : 
+                    $isRequack = ($quack['content'] === null && $quack['parent_id'] !== null);
+
+                    if ($isRequack) {
+                        $display = [
+                            'id' => $quack['parent_id'],
+                            'user_id' => $quack['orig_user_id'],
+                            'content' => $quack['orig_content'],
+                            'display_name' => $quack['orig_display_name'],
+                            'username' => $quack['orig_username'],
+                            'profile_image' => $quack['orig_profile_image'],
+                            'created_at' => $quack['created_at'] //när requacked gjordes
+                        ];
+                    } else {
+                        $display = $q;
+                    }
+                    ?>
                     
                     <div class="quack-card bg-white p-3 rounded shadow-sm mb-3">
+                        <?php if($isRequack) : ?>
+                            <div class="text-muted small mb-2 ms-5 fw-bold">
+                                <svg class="quack-icon" fill="#000000" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M5 4a2 2 0 0 0-2 2v6H0l4 4 4-4H5V6h7l2-2H5zm10 4h-3l4-4 4 4h-3v6a2 2 0 0 1-2 2H6l2-2h7V8z"></path></g></svg>
+                                <?= htmlspecialchars($quack['display_name']) ?> requacked
+                            </div>
+                            <?php endif; ?>
                         <div class="d-flex gap-3 text-dark">
-                            <img src="<?= getPfpPath($quack['profile_image']) ?>" class="profile-pic-placeholder">
+                            <img src="<?= getPfpPath($display['profile_image']) ?>" class="profile-pic-placeholder">
                             <div class="flex-grow-1 text-start">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="fw-bold text-dark"><?= htmlspecialchars($quack['display_name']) ?></span>
+                                    <span class="fw-bold text-dark"><?= htmlspecialchars($display['display_name']) ?></span>
                                     <span class="text-muted small">
-                                        @<?= htmlspecialchars($quack['username']) ?> &bull;
-                                        <span title="<?= date('Y-m-d H:i', strtotime($quack['created_at'])) ?>">
-                                         <?= formatQuackTime($quack['created_at']) ?>
+                                        @<?= htmlspecialchars($display['username']) ?> &bull;
+                                        <span title="<?= date('Y-m-d H:i', strtotime($display['created_at'])) ?>">
+                                         <?= formatQuackTime($display['created_at']) ?>
                                         </span>
                                         </span>
                                 </div>
-                                <p class="mt-1 mb-0 fs-6 text-dark"><?= htmlspecialchars($quack['content']) ?></p>
+                                <p class="mt-1 mb-0 fs-6 text-dark"><?= htmlspecialchars($display['content']) ?></p>
 
                                 <?php if (!empty($quack['images'])) : 
                                     $imgCount = count($quack['images']);
@@ -198,7 +233,8 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
                                     <svg class="quack-icon" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>comment 5</title> <desc>Created with Sketch Beta.</desc> <defs> </defs> <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage"> <g id="Icon-Set-Filled" sketch:type="MSLayerGroup" transform="translate(-362.000000, -257.000000)" fill="#000000"> <path d="M388.667,257 L367.333,257 C364.388,257 362,259.371 362,262.297 L362,279.187 C362,282.111 364.055,284 367,284 L373.639,284 L378,289.001 L382.361,284 L389,284 C391.945,284 394,282.111 394,279.187 L394,262.297 C394,259.371 391.612,257 388.667,257" id="comment-5" sketch:type="MSShapeGroup"> </path> </g> </g> </g></svg>
                                         <span class="align-middle"><?= $quack['comment_count'] ?></span>
                                     </span>
-                                    <span class="action-icon">
+                                    <span class="action-icon requack-btn <?= $isRequack ? 'is-requacked' : '' ?>"
+                                                data-quack-id="<?= $display['id'] ?>">
                                     <svg class="quack-icon" fill="#000000" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M5 4a2 2 0 0 0-2 2v6H0l4 4 4-4H5V6h7l2-2H5zm10 4h-3l4-4 4 4h-3v6a2 2 0 0 1-2 2H6l2-2h7V8z"></path></g></svg>
                                         <span class="align-middle"><?= $quack['requack_count'] ?></span>
                                     </span>

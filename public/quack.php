@@ -41,7 +41,9 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 
             <div class="quack-card bg-white p-4 rounded shadow">
                 <div class="d-flex gap-3 mb-3">
+                    <a href="profile.php?id=<?= $quack['user_id'] ?>">
                     <img src="<?= getPfpPath($quack['profile_image']) ?>" class="profile-pic-placeholder">
+                    </a>
                     <div>
                         <h5 class="fw-bold mb-0"><?= htmlspecialchars($quack['display_name']) ?></h5>
                         <p class="text-muted small">@<?= htmlspecialchars($quack['username']) ?></p>
