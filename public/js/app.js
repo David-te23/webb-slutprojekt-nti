@@ -77,12 +77,12 @@ document.addEventListener('click', function(e) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            // 1. Om vi är på en profil och det var en requack som togs bort
-            // Vi kollar om "X requacked"-texten finns i kortet
+            // Om vi är på en profil och det var en requack som togs bort
+            // Kollar om "X requacked"-texten finns i kortet
             const isRequackNote = quackCard.querySelector('.text-muted.small.fw-bold');
             
             if (data.status === 'removed' && isRequackNote) {
-                // Ta bort hela kortet med en snygg animation
+                // Ta bort hela kortet med en animation
                 quackCard.style.opacity = '0';
                 quackCard.style.transform = 'translateX(20px)';
                 quackCard.style.transition = 'all 0.3s ease';
@@ -133,4 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Körs på quack.php 
     setupEmojiPicker('reply-emoji-trigger', 'reply-picker-container', 'reply-textarea', 'reply-picker');
+
+    // Körs på messages.php
+    setupEmojiPicker('chat-emoji-trigger', 'chat-picker-container', 'chat-input-field', 'chat-emoji-picker');
 });

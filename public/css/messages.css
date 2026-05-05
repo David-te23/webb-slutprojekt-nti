@@ -1,0 +1,148 @@
+/* HUVUDLAYOUT - Tvingar boxen att hålla sig inom skärmen */
+.messages-layout {
+    display: flex !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 80vh;
+    min-height: 500px;
+    background-color: #fff;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+}
+
+/* VÄNSTERKOLUMN - Fast bredd (en tredjedel) */
+.conversation-sidebar {
+    flex: 0 0 33.333% !important;
+    max-width: 33.333% !important;
+    border-right: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
+}
+
+/* HÖGERKOLUMN - Chatten (två tredjedelar) */
+.chat-main {
+    flex: 0 0 66.666% !important;
+    max-width: 66.666% !important;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Förhindrar att innehåll trycker ut bredden */
+    background-color: #f0f2f0;
+}
+
+/* CHATTHISTORIK - Scrollbar och flexibel */
+#chatHistory {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow-anchor: none; 
+}
+
+/* MEDDELANDE-BUBBLOR */
+.message-bubble {
+    max-width: 85%;
+    padding: 8px 15px;
+    margin-bottom: 10px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Skickade meddelanden (Gröna) */
+.sent {
+    background-color: #28a745 !important;
+    color: white;
+    border-radius: 15px 15px 2px 15px;
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+/* Mottagna meddelanden (Vita) */
+.received {
+    background-color: #ffffff;
+    color: #333;
+    border-radius: 15px 15px 15px 2px;
+    align-self: flex-start;
+    margin-right: auto;
+    border: 1px solid #dee2e6;
+}
+
+/* Tidstämplar och info */
+.message-time {
+    font-size: 0.7rem;
+    margin-top: 4px;
+    display: block;
+    text-align: right;
+    opacity: 0.8;
+}
+
+.chat-input-container {
+    background-color: white;
+    padding: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+/* SCROLLBARS */
+#chatHistory::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chatHistory::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+
+.d-flex.mb-3 {
+    width: 100% !important;
+}
+
+.pfp-placeholder-small {
+    width: 45px;
+    height: 45px;
+    background-color: #ddd;
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.chat-img {
+    max-width: 250px;
+    max-height: 300px;
+    object-fit: cover;
+    border-radius: 10px;
+    cursor: zoom-in;
+}
+
+.chat-preview-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    display: block;
+}
+
+.chat-img-msg {
+    max-width: 250px;
+    display: block; 
+}
+
+.preview-remove-btn {
+    width: 10px;
+    height: 10px;
+    font-size: 0.6rem;
+    padding: 3px;
+    z-index: 10;
+}
+
+.msg-emoji-picker {
+    bottom: 70px;
+}
+
+
