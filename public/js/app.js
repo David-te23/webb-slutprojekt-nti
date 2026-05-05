@@ -16,10 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('DOMContentLoaded', function() {
     const imageModal = document.getElementById('imageModal');
-    if (imageModal) {
-        const carousel = new bootstrap.Carousel(document.getElementById('quackCarousel'));
+    const quackCarouselElement = document.getElementById('quackCarousel'); // Spara i variabel
+
+    // kontrollera att modalen och karusellen finns
+    if (imageModal && quackCarouselElement) {
+        const carousel = new bootstrap.Carousel(quackCarouselElement);
         
-        // Lyssna på klick i galleriet för att byta bild i carouselen
+        // lyssna på klick i galleriet för att byta bild i carouselen
         document.querySelectorAll('[data-bs-target="#imageModal"]').forEach(item => {
             item.addEventListener('click', function() {
                 const slideTo = parseInt(this.getAttribute('data-bs-slide-to'));
@@ -30,16 +33,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
+
 // live uppdatering av like knapp
 document.addEventListener('click', function(e) {
-    // Hitta om klicket skedde på en like-knapp
     const button = e.target.closest('.like-btn');
-    
-    if (!button) return; // Om en like-knapp inte klickades, gör inget
+    if (!button) return;
 
     e.preventDefault();
     const quackId = button.getAttribute('data-quack-id');
-    const countSpan = button.querySelector('.like-count');
 
     fetch('actions/like_handler.php', {
         method: 'POST',
@@ -48,24 +49,28 @@ document.addEventListener('click', function(e) {
     })
     .then(response => response.json())
     .then(data => {
-        
         if (data.status === 'success' || data.success) {
-            countSpan.innerText = data.new_count;
-            button.classList.toggle('is-liked', data.is_liked || data.liked);
+            // HITTA ALLA LIKES PÅ SIDAN MED SAMMA ID
+            const allLikeButtons = document.querySelectorAll(`.like-btn[data-quack-id="${quackId}"]`);
+            
+            allLikeButtons.forEach(btn => {
+                const countSpan = btn.querySelector('.like-count');
+                countSpan.innerText = data.new_count;
+                btn.classList.toggle('is-liked', data.is_liked || data.liked);
+            });
         }
     })
     .catch(err => console.error('Like error:', err));
-    });
+});
 
-//Requacks
+// Requacks 
 document.addEventListener('click', function(e) {
     const btn = e.target.closest('.requack-btn');
     if (!btn) return;
 
     e.preventDefault();
     const quackId = btn.dataset.quackId;
-    const countEl = btn.querySelector('.requack-count');
-    const quackCard = btn.closest('.quack-card'); // Hitta hela inlägget
+    const quackCard = btn.closest('.quack-card');
 
     const formData = new FormData();
     formData.append('quack_id', quackId);
@@ -77,27 +82,27 @@ document.addEventListener('click', function(e) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            // Om vi är på en profil och det var en requack som togs bort
-            // Kollar om "X requacked"-texten finns i kortet
             const isRequackNote = quackCard.querySelector('.text-muted.small.fw-bold');
             
             if (data.status === 'removed' && isRequackNote) {
-                // Ta bort hela kortet med en animation
                 quackCard.style.opacity = '0';
                 quackCard.style.transform = 'translateX(20px)';
                 quackCard.style.transition = 'all 0.3s ease';
-                
-                setTimeout(() => {
-                    quackCard.remove();
-                }, 300);
+                setTimeout(() => { quackCard.remove(); }, 300);
             } else {
-                // Annars, bara uppdatera siffran och färgen (som på index)
-                countEl.textContent = data.newCount;
-                btn.classList.toggle('is-requacked', data.status === 'added');
+                // UPPDATERA ALLA REQUACK-KNAPPAR PÅ SIDAN MED SAMMA ID
+                const allRequackButtons = document.querySelectorAll(`.requack-btn[data-quack-id="${quackId}"]`);
+                
+                allRequackButtons.forEach(rBtn => {
+                    const countEl = rBtn.querySelector('.requack-count');
+                    countEl.textContent = data.newCount;
+                    rBtn.classList.toggle('is-requacked', data.status === 'added');
+                });
             }
         }
     });
 });
+
 
 document.addEventListener('DOMContentLoaded', () => {
     function setupEmojiPicker(triggerId, containerId, textareaId, pickerId) {
