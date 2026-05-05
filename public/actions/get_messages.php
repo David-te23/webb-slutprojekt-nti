@@ -1,6 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../../database/db.php';
+require_once __DIR__ . '/../../includes/message_time_formatter.php';
 
 $myId = $_SESSION['user_id'];
 $contactId = (int)$_GET['user_id'];
@@ -19,7 +20,7 @@ foreach ($messages as $msg):
             <?php if ($msg['message_text']): ?>
                 <div class="message-text"><?= htmlspecialchars($msg['message_text']) ?></div>
             <?php endif; ?>
-            <span class="message-time"><?= date('H:i', strtotime($msg['created_at'])) ?></span>
+            <span class="message-time"><?= formatMessageTime($msg['created_at']) ?></span>
         </div>
     </div>
 <?php endforeach; ?>
