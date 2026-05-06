@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const div = document.createElement('div');
                     div.className = 'position-relative d-inline-block mt-2 mb-2';
                     div.innerHTML = `
-                        <img src="${event.target.result}" class="rounded border shadow-sm chat-preview-img" style="width:100px; height:100px; object-fit:cover; display:block;">
+                        <img src="${event.target.result}" class="rounded border shadow-sm chat-preview-img">
                         <button type="button" class="btn-close preview-remove-btn position-absolute top-0 end-0 bg-white rounded-circle p-1 m-1" 
                                 aria-label="Remove"></button>
                     `;

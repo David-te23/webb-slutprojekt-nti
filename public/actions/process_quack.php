@@ -11,35 +11,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
         $stmt->execute([$userId, $content]);
         $quackId = $dbconn->lastInsertId();
 
+        // --- NOTIS-LOGIK START ---
+        // Hämta alla som följer den inloggade användaren
+        $stmtFollowers = $dbconn->prepare("SELECT follower_id FROM follows WHERE following_id = ?");
+        $stmtFollowers->execute([$userId]);
+        $followers = $stmtFollowers->fetchAll(PDO::FETCH_COLUMN);
+
+        // Skapa en notis för varje följare
+        if (!empty($followers)) {
+            $notifStmt = $dbconn->prepare("INSERT INTO notifications (user_id, source_user_id, type, source_id, is_read) VALUES (?, ?, 'quack', ?, 0)");
+            foreach ($followers as $followerId) {
+                $notifStmt->execute([$followerId, $userId, $quackId]);
+            }
+        }
+        // --- NOTIS-LOGIK SLUT ---
+
         if (!empty($_FILES['quack_images']['name'][0])) {
             $uploadDir = __DIR__ . '/../uploads/quacks/';
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-            // max filstorlek, 10MB
             $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
-            $maxFileSize = 10 * 1024 * 1024; // 10MB
+            $maxFileSize = 10 * 1024 * 1024; 
 
             foreach ($_FILES['quack_images']['tmp_name'] as $key => $tmpName) {
                 if ($_FILES['quack_images']['error'][$key] === UPLOAD_ERR_OK) {
-                    
-                    // kontrollera filens storlek
                     if ($_FILES['quack_images']['size'][$key] > $maxFileSize) continue;
 
-                    // kontrollera filens typ med MIME type
                     $finfo = finfo_open(FILEINFO_MIME_TYPE);
                     $mimeType = finfo_file($finfo, $tmpName);
                     finfo_close($finfo);
 
                     if (!in_array($mimeType, $allowedMimeTypes)) continue;
 
-                    // skapa ett säkert filnamn
                     $extension = pathinfo($_FILES['quack_images']['name'][$key], PATHINFO_EXTENSION);
                     $fileName = bin2hex(random_bytes(16)) . '.' . $extension;
                     $targetPath = $uploadDir . $fileName;
 
                     if (move_uploaded_file($tmpName, $targetPath)) {
                         $dbPath = 'uploads/quacks/' . $fileName;
-                        // Spara MIME type i databasen så att man vet om det är bild/video
                         $imgStmt = $dbconn->prepare("INSERT INTO quack_images (quack_id, image_path, file_type) VALUES (?, ?, ?)");
                         $imgStmt->execute([$quackId, $dbPath, $mimeType]);
                     }
@@ -48,5 +57,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
         }
     }
 }
-header("Location: ../public/index.php");
+header("Location: ../index.php");
 exit;

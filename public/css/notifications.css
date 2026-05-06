@@ -1,0 +1,39 @@
+/* Huvudbehållaren för notiserna */
+.notifications-container {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Basstil för varje notis-rad */
+.list-group-item-action {
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+    color: inherit;
+}
+
+.list-group-item-action:hover {
+    background-color: #f8f9fa;
+}
+
+/* Olästa notiser - Quacker-gul */
+.bg-unread {
+    background-color: #fff9e6;
+    border-left-color: #ffc107;
+}
+
+/* Profilbild i notislistan */
+.notification-img {
+    width: 55px;
+    height: 55px;
+    object-fit: cover;
+}
+
+/* Förhandsvisning av Quack-texten (citatet) */
+.notification-preview {
+    font-style: italic;
+    background-color: #f1f1f1 !important;
+    border-left: 3px solid #dee2e6;
+}

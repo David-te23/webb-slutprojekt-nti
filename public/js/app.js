@@ -1,28 +1,70 @@
+
+ // --- NOTIS-SYSTEMET ---
+ function updateNotificationBadge() {
+    const notifBadge = document.getElementById('notif-badge');
+    const msgBadge = document.getElementById('msg-badge');
+    
+    if (!notifBadge && !msgBadge) return;
+
+    fetch('actions/get_unread_count.php?t=' + Date.now())
+        .then(response => response.json())
+        .then(data => {
+            // Hantera Notiser
+            if (notifBadge) {
+                if (data.unread_notifications > 0) {
+                    notifBadge.innerText = data.unread_notifications;
+                    notifBadge.classList.remove('d-none');
+                } else {
+                    notifBadge.classList.add('d-none');
+                }
+            }
+
+            // Hantera Meddelanden
+            if (msgBadge) {
+                if (data.unread_messages > 0) {
+                    msgBadge.innerText = data.unread_messages;
+                    msgBadge.classList.remove('d-none');
+                } else {
+                    msgBadge.classList.add('d-none');
+                }
+            }
+        })
+        .catch(err => console.error('Badge-fel:', err));
+}
+
+
+// Starta notis-loopen med 10s interval
+updateNotificationBadge();
+setInterval(updateNotificationBadge, 10000);
+
+
+
+ // --- NAVBAR & SÖK (Mobil) ---
 document.addEventListener('DOMContentLoaded', () => {
     const searchBtn = document.getElementById('mobileSearchBtn');
     const closeSearchBtn = document.getElementById('closeSearchBtn');
     const header = document.getElementById('siteheader');
     const mobileInput = document.getElementById('mobileInput');
 
-    searchBtn.addEventListener('click', () => {
-        header.classList.add ('search-active')
-        mobileInput.focus();
-    });
-
-    closeSearchBtn.addEventListener('click', () => {
-        header.classList.remove('search-active');
-    });
+    if (searchBtn && header && mobileInput) {
+        searchBtn.addEventListener('click', () => {
+            header.classList.add('search-active');
+            mobileInput.focus();
+        });
+        closeSearchBtn.addEventListener('click', () => {
+            header.classList.remove('search-active');
+        });
+    }
 });
 
+
+ // --- BILD-MODAL & KARUSELL ---
 document.addEventListener('DOMContentLoaded', function() {
     const imageModal = document.getElementById('imageModal');
-    const quackCarouselElement = document.getElementById('quackCarousel'); // Spara i variabel
+    const quackCarouselElement = document.getElementById('quackCarousel');
 
-    // kontrollera att modalen och karusellen finns
     if (imageModal && quackCarouselElement) {
         const carousel = new bootstrap.Carousel(quackCarouselElement);
-        
-        // lyssna på klick i galleriet för att byta bild i carouselen
         document.querySelectorAll('[data-bs-target="#imageModal"]').forEach(item => {
             item.addEventListener('click', function() {
                 const slideTo = parseInt(this.getAttribute('data-bs-slide-to'));
@@ -33,8 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-
-// live uppdatering av like knapp
+// --- LIKE-HANTERARE --- 
 document.addEventListener('click', function(e) {
     const button = e.target.closest('.like-btn');
     if (!button) return;
@@ -50,9 +91,7 @@ document.addEventListener('click', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success' || data.success) {
-            // HITTA ALLA LIKES PÅ SIDAN MED SAMMA ID
             const allLikeButtons = document.querySelectorAll(`.like-btn[data-quack-id="${quackId}"]`);
-            
             allLikeButtons.forEach(btn => {
                 const countSpan = btn.querySelector('.like-count');
                 countSpan.innerText = data.new_count;
@@ -63,7 +102,8 @@ document.addEventListener('click', function(e) {
     .catch(err => console.error('Like error:', err));
 });
 
-// Requacks 
+ 
+ // --- REQUACK-HANTERARE ---
 document.addEventListener('click', function(e) {
     const btn = e.target.closest('.requack-btn');
     if (!btn) return;
@@ -83,16 +123,12 @@ document.addEventListener('click', function(e) {
     .then(data => {
         if (data.success) {
             const isRequackNote = quackCard.querySelector('.text-muted.small.fw-bold');
-            
             if (data.status === 'removed' && isRequackNote) {
                 quackCard.style.opacity = '0';
-                quackCard.style.transform = 'translateX(20px)';
                 quackCard.style.transition = 'all 0.3s ease';
                 setTimeout(() => { quackCard.remove(); }, 300);
             } else {
-                // UPPDATERA ALLA REQUACK-KNAPPAR PÅ SIDAN MED SAMMA ID
                 const allRequackButtons = document.querySelectorAll(`.requack-btn[data-quack-id="${quackId}"]`);
-                
                 allRequackButtons.forEach(rBtn => {
                     const countEl = rBtn.querySelector('.requack-count');
                     countEl.textContent = data.newCount;
@@ -104,6 +140,7 @@ document.addEventListener('click', function(e) {
 });
 
 
+ // --- EMOJI-PICKERS ---
 document.addEventListener('DOMContentLoaded', () => {
     function setupEmojiPicker(triggerId, containerId, textareaId, pickerId) {
         const trigger = document.getElementById(triggerId);
@@ -111,13 +148,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const textarea = document.getElementById(textareaId);
         const picker = document.getElementById(pickerId);
 
-        // Om något av elementen saknas
         if (!trigger || !container || !textarea || !picker) return;
 
         trigger.addEventListener('click', (e) => {
             e.preventDefault();
-            const isVisible = container.style.display === 'block';
-            container.style.display = isVisible ? 'none' : 'block';
+            container.style.display = container.style.display === 'block' ? 'none' : 'block';
         });
 
         picker.addEventListener('emoji-click', event => {
@@ -133,12 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Körs på index.php
     setupEmojiPicker('emoji-trigger', 'picker-container', 'quack-textarea', 'quack-picker');
-
-    // Körs på quack.php 
     setupEmojiPicker('reply-emoji-trigger', 'reply-picker-container', 'reply-textarea', 'reply-picker');
-
-    // Körs på messages.php
     setupEmojiPicker('chat-emoji-trigger', 'chat-picker-container', 'chat-input-field', 'chat-emoji-picker');
 });

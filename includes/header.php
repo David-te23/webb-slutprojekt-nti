@@ -21,10 +21,25 @@ if (!isset($_SESSION['user_id']) && !in_array($currentPage, $publicPages)) {
 }
 
 $currentUser = null;
+$unreadCount = 0; // standardvärde för alla notiser
+$unreadMessages = 0; //standardvärde för meddelande notiser
+
 if (isset($_SESSION['user_id'])) {
+    $userId = $_SESSION['user_id'];
+
+    // Hämta användarinformation
     $stmt = $dbconn->prepare("SELECT * FROM users WHERE id =?");
     $stmt->execute([$_SESSION['user_id']]);
     $currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Hämta antal olästa notiser för nav-bubblan
+    $stmtCount = $dbconn->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
+    $stmtCount->execute([$_SESSION['user_id']]);
+    $unreadCount = (int)$stmtCount->fetchColumn();
+
+    $stmtMsgCount = $dbconn->prepare("SELECT COUNT(*) FROM messages WHERE receiver_id = ? AND is_read = 0");
+    $stmtMsgCount->execute([$userId]);
+    $unreadMessages = (int)$stmtMsgCount->fetchColumn();
 }
 ?>
 <!DOCTYPE html>
@@ -40,6 +55,7 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/profile.css">
     <link rel="stylesheet" href="css/messages.css">
+    <link rel="stylesheet" href="css/notifications.css">
     
     <?php 
     if ($currentPage == 'login.php' || $currentPage == 'register.php'): ?>
@@ -65,7 +81,7 @@ if (isset($_SESSION['user_id'])) {
             
             <!-- sök ikon (visas bara på mobil) -->
             <button class="btn text-white d-lg-none ms-2 p-0" id="mobileSearchBtn" type="button">
-            <svg xmlns="http://www.w3.org" width="24" height="24" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+            <svg xmlns="http://w3.org" width="24" height="24" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                 </svg>
             </button>
@@ -97,51 +113,41 @@ if (isset($_SESSION['user_id'])) {
     <div class="row gx-4">
 
     <?php 
-    $currentPage = basename($_SERVER['PHP_SELF']);
     $showSidebar = ($currentPage !== 'messages.php' && $currentPage !== 'login.php' && $currentPage !== 'register.php');
             
     if ($showSidebar): ?>
-        <!-- Sidebar: Trending & Recommendations ONLY SHOWS IF NOT ON messages.php-->
+        <!-- Sidebar: Trending & Recommendations -->
         <aside class="col-lg-3 col-md-4 d-none d-md-block">
-    <!-- Trending Section -->
-    <div class="trending-section mb-4 p-3 custom-sidebar-card shadow-sm">
-        <h5 class="fw-bold mb-3">Trending now</h5>
-        <div class="d-grid gap-2">
-            <a href="#" class="btn btn-trending shadow-sm bg-white">#trend</a>
-            <a href="#" class="btn btn-trending shadow-sm bg-white">#quackify</a>
-            <a href="#" class="btn btn-trending shadow-sm bg-white">#BTC</a>
-        </div>
-    </div>
-
-    <!-- Suggestions Section -->
-    <div class="suggestions-section p-3 custom-sidebar-card shadow-sm">
-        <h5 class="fw-bold mb-3">You might know</h5>
-        
-        <!-- User Suggestion 1 -->
-        <div class="suggestion-item d-flex align-items-center mb-3 p-2 rounded shadow-sm bg-white">
-            <div class="profile-pic-placeholder me-2"></div>
-            <div class="user-info">
-                <div class="fw-bold lh-1 text-truncate-custom">George</div>
-                <small class="text-muted text-truncate-custom">@george123</small>
+            <div class="trending-section mb-4 p-3 custom-sidebar-card shadow-sm">
+                <h5 class="fw-bold mb-3">Trending now</h5>
+                <div class="d-grid gap-2">
+                    <a href="#" class="btn btn-trending shadow-sm bg-white">#trend</a>
+                    <a href="#" class="btn btn-trending shadow-sm bg-white">#quackify</a>
+                    <a href="#" class="btn btn-trending shadow-sm bg-white">#BTC</a>
+                </div>
             </div>
-        </div>
 
-        <!-- User Suggestion 2 -->
-        <div class="suggestion-item d-flex align-items-center p-2 rounded shadow-sm bg-white">
-            <div class="profile-pic-placeholder me-2"></div>
-            <div class="user-info">
-                <div class="fw-bold lh-1 text-truncate-custom">DuckGod</div>
-                <small class="text-muted text-truncate-custom">@duckmaswdwhdhdwhuhasudwh</small>
+            <div class="suggestions-section p-3 custom-sidebar-card shadow-sm">
+                <h5 class="fw-bold mb-3">You might know</h5>
+                <div class="suggestion-item d-flex align-items-center mb-3 p-2 rounded shadow-sm bg-white">
+                    <div class="profile-pic-placeholder me-2"></div>
+                    <div class="user-info">
+                        <div class="fw-bold lh-1 text-truncate-custom">George</div>
+                        <small class="text-muted text-truncate-custom">@george123</small>
+                    </div>
+                </div>
+                <div class="suggestion-item d-flex align-items-center p-2 rounded shadow-sm bg-white">
+                    <div class="profile-pic-placeholder me-2"></div>
+                    <div class="user-info">
+                        <div class="fw-bold lh-1 text-truncate-custom">DuckGod</div>
+                        <small class="text-muted text-truncate-custom">@duckmas...</small>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-</aside>
+        </aside>
 
-
-        <!-- Main column narrower to fit sidebar -->
-        <main class="col-lg-9 col-md-9">
+        <!-- Main column -->
+        <main class="col-lg-9 col-md-8">
     <?php else : ?>
-        <!-- main column, full width for messages.php -->
         <main class="col-12">
     <?php endif; ?>
-

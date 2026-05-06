@@ -4,9 +4,33 @@
     </button>
     <div class="collapse navbar-collapse" id="quackerNav">
         <ul class="navbar-nav gap-lg-4">
-            <li class="nav-item"><a class="nav-link text-white" href="index.php">Feed</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="notifications.php">Notifications</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="messages.php">Messages</a></li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="index.php">Feed</a>
+            </li>
+            <li class="nav-item position-relative">
+                <a class="nav-link text-white d-flex align-items-center" href="notifications.php">
+                    Notifications
+                    <?php if (isset($unreadCount) && $unreadCount > 0): ?>
+                        <span id="notif-badge" class="badge rounded-pill bg-danger ms-2">
+                            <?= $unreadCount ?>
+                        </span>
+                    <?php else: ?>
+                        <span id="notif-badge" class="badge rounded-pill bg-danger ms-2 d-none"></span>
+                    <?php endif; ?>
+                </a>
+            </li>
+            <li class="nav-item position-relative">
+                <a class="nav-link text-white d-flex align-items-center" href="messages.php">
+                    Messages
+                    <?php if (isset($unreadMessages) && $unreadMessages > 0): ?>
+                        <span id="msg-badge" class="badge rounded-pill bg-danger ms-2">
+                            <?= $unreadMessages ?>
+                        </span>
+                    <?php else: ?>
+                        <span id="msg-badge" class="badge rounded-pill bg-danger ms-2 d-none"></span>
+                    <?php endif; ?>
+                </a>
+            </li>
         </ul>
     </div>
 </nav>

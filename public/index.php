@@ -36,7 +36,7 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
     <div class="create-quack-card bg-white p-3 rounded shadow-sm mb-4">
         <div class="d-flex gap-3">
             <img src="<?= getPfpPath($currentUser['profile_image']) ?>" class="profile-pic-placeholder">
-            <form action="../actions/process_quack.php" method="POST" enctype="multipart/form-data" class="flex-grow-1">
+            <form action="actions/process_quack.php" method="POST" enctype="multipart/form-data" class="flex-grow-1">
                 <textarea id="quack-textarea" name="quack_content" rows="1" class="form-control border-0 fs-5 mb-2" placeholder="What is quacking?" required maxlength="280"></textarea>
                 <!-- selected img preview-->
                 <div id="img-preview-container" class="d-flex flex-wrap gap-2 mb-2"></div>

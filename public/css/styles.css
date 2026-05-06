@@ -427,5 +427,23 @@ body {
     .footer-links {
         flex-direction: row !important;
     }
+
+    .emoji-picker-container, 
+    #reply-picker-container, 
+    #chat-picker-container {
+        position: fixed !important; /* Fixed gör att den inte bryr sig om containern på mobilen */
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 90vw !important;
+        max-width: 320px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    emoji-picker {
+        width: 100% !important;
+        height: 300px !important;
+        --num-columns: 6; /* Gör den lite smalare för att passa små skärmar */
+    }
 }
 
