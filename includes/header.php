@@ -40,6 +40,39 @@ if (isset($_SESSION['user_id'])) {
     $stmtMsgCount = $dbconn->prepare("SELECT COUNT(*) FROM messages WHERE receiver_id = ? AND is_read = 0");
     $stmtMsgCount->execute([$userId]);
     $unreadMessages = (int)$stmtMsgCount->fetchColumn();
+
+    if (isset($_SESSION['user_id'])) {
+        $userId = $_SESSION['user_id'];
+    
+        $trendingStmt = $dbconn->query("
+            SELECT h.tag_name, COUNT(qh.quack_id) as usage_count 
+            FROM hashtags h
+            JOIN quack_hashtags qh ON h.id = qh.hashtag_id
+            GROUP BY h.id
+            ORDER BY usage_count DESC
+            LIMIT 3
+        ");
+        $trendingTags = $trendingStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Hämta rekommenderade användare (You might know)
+        $suggestionsStmt = $dbconn->prepare("
+        SELECT u.id, u.username, u.display_name, u.profile_image, 
+            COUNT(f2.follower_id) as mutual_followers
+        FROM users u
+        -- Hitta kopplingar via folk du följer
+        LEFT JOIN follows f2 ON u.id = f2.following_id 
+        AND f2.follower_id IN (SELECT following_id FROM follows WHERE follower_id = ?)
+        WHERE u.id != ? -- Inte du själv
+        AND u.id NOT IN (SELECT following_id FROM follows WHERE follower_id = ?) -- Inte folk du redan följer
+        GROUP BY u.id
+        ORDER BY mutual_followers DESC, RAND() -- Prioritera gemensamma vänner, sen slumpmässigt
+        LIMIT 3
+        ");
+        $suggestionsStmt->execute([$userId, $userId, $userId]);
+        $suggestions = $suggestionsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    }
+    
 }
 ?>
 <!DOCTYPE html>
@@ -75,39 +108,44 @@ if (isset($_SESSION['user_id'])) {
 <body>
 <header class="site-header" id="siteheader">
     <div class="header-container container-fluid d-flex align-items-center justify-content-between px-3">
-        <!-- vänster sida av header: nav + sök-->
-        <div class="nav-container d-flex ps-0 flex-grow-1 flex-b-0">
+        
+        <!-- Vänster sida: nav + mobilsök -->
+        <div class="nav-container d-flex ps-0 flex-grow-1 flex-basis-0">
             <?php require __DIR__ . '/nav.php'; ?>
             
-            <!-- sök ikon (visas bara på mobil) -->
             <button class="btn text-white d-lg-none ms-2 p-0" id="mobileSearchBtn" type="button">
-            <svg xmlns="http://w3.org" width="24" height="24" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                <svg xmlns="http://w3.org" width="24" height="24" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                 </svg>
             </button>
-            <input type="search" class="form-control mobile-search-input" placeholder="Search Quacker...">
+
+            <form action="search.php" method="GET" class="mobile-search-form flex-grow-1">
+                <input type="search" name="query" id="mobileInput" class="form-control mobile-search-input" placeholder="Search Quacker...">
+            </form>
             <button class="btn-close btn-close-white d-none" id="closeSearchBtn"></button>
         </div>
 
-        <!-- mitten av header: quacker logga -->
+        <!-- Mitten: Quacker logga (Hålls centrerad) -->
         <div class="text-center header-logo-container">
-        <a href="index.php">
-            <img src="../public/images/QuackerLogo.svg" alt="Quacker Logo" class="header-img">
-        </a>
+            <a href="index.php">
+                <img src="../public/images/QuackerLogo.svg" alt="Quacker Logo" class="header-img">
+            </a>
         </div>
 
-        <!-- höger sida: sökfält + profil -->
-        <div class="search-profile-container flex-grow-1 d-flex justify-content-end align-items-center flex-b-0">
-            <!-- döljs på mobil (d-none), visas på desktop (d-lg-block) -->
-            <input type="search" name="" id="header-search" placeholder="Search Quacker" class="form-control d-none d-lg-block me-3 qSearchBar">
+       <!-- höger sida: sökfält + profil -->
+        <div class="search-profile-container flex-grow-1 d-flex justify-content-end align-items-center flex-basis-0">
+            <form action="search.php" method="GET" class="d-none d-lg-flex align-items-center m-0">
+                <input type="search" name="query" id="header-search" placeholder="Search Quacker" class="form-control me-3 qSearchBar">
+            </form>
 
             <a href="profile.php?id=<?= $currentUser['id'] ?>" class="profile-button p-0 m-0">
                 <img src="<?= getPfpPath($currentUser['profile_image'] ?? 'default_pfp.jpg') ?>"
-                 alt="Profile" class="header-img">
+                alt="Profile" class="header-img">
             </a>
         </div>
     </div>
 </header>
+
 
 <div class="container py-4">
     <div class="row gx-4">
@@ -121,29 +159,46 @@ if (isset($_SESSION['user_id'])) {
             <div class="trending-section mb-4 p-3 custom-sidebar-card shadow-sm">
                 <h5 class="fw-bold mb-3">Trending now</h5>
                 <div class="d-grid gap-2">
-                    <a href="#" class="btn btn-trending shadow-sm bg-white">#trend</a>
-                    <a href="#" class="btn btn-trending shadow-sm bg-white">#quackify</a>
-                    <a href="#" class="btn btn-trending shadow-sm bg-white">#BTC</a>
+                <?php if (!empty($trendingTags)): ?>
+                <?php foreach ($trendingTags as $tag): ?>
+                    <a href="search.php?query=%23<?= urlencode($tag['tag_name']) ?>" class="btn btn-trending shadow-sm bg-white">
+                        #<?= htmlspecialchars($tag['tag_name']) ?>
+                    </a>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="text-muted small ps-2">No trends yet...</p>
+            <?php endif; ?>
                 </div>
             </div>
 
             <div class="suggestions-section p-3 custom-sidebar-card shadow-sm">
-                <h5 class="fw-bold mb-3">You might know</h5>
-                <div class="suggestion-item d-flex align-items-center mb-3 p-2 rounded shadow-sm bg-white">
-                    <div class="profile-pic-placeholder me-2"></div>
-                    <div class="user-info">
-                        <div class="fw-bold lh-1 text-truncate-custom">George</div>
-                        <small class="text-muted text-truncate-custom">@george123</small>
+            <h5 class="fw-bold mb-3">You might know</h5>
+    
+            <?php if (!empty($suggestions)): ?>
+                <?php foreach ($suggestions as $suggestedUser): ?>
+                    <div class="suggestion-wrapper d-flex align-items-center justify-content-between mb-3 p-2 rounded shadow-sm bg-white">
+                        <!-- Vänster sida: Klickbar profilinfo -->
+                        <a href="profile.php?id=<?= $suggestedUser['id'] ?>" class="suggestion-item d-flex align-items-center text-decoration-none text-dark flex-grow-1 overflow-hidden">
+                            <img src="<?= getPfpPath($suggestedUser['profile_image']) ?>" class="suggestion-pfp me-2">
+                            
+                            <div class="user-info text-truncate">
+                                <div class="fw-bold lh-1 text-truncate-custom"><?= htmlspecialchars($suggestedUser['display_name']) ?></div>
+                                <small class="text-muted text-truncate-custom">@<?= htmlspecialchars($suggestedUser['username']) ?></small>
+                            </div>
+                        </a>
+
+                        <!-- Höger sida: Follow-knapp -->
+                        <button class="btn btn-sm btn-outline-success rounded-pill follow-btn-sm ms-2" 
+                                data-user-id="<?= $suggestedUser['id'] ?>" 
+                                data-action="follow">
+                            +
+                        </button>
                     </div>
-                </div>
-                <div class="suggestion-item d-flex align-items-center p-2 rounded shadow-sm bg-white">
-                    <div class="profile-pic-placeholder me-2"></div>
-                    <div class="user-info">
-                        <div class="fw-bold lh-1 text-truncate-custom">DuckGod</div>
-                        <small class="text-muted text-truncate-custom">@duckmas...</small>
-                    </div>
-                </div>
-            </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="p-2 text-muted small">No new suggestions...</div>
+            <?php endif; ?>
+        </div>
         </aside>
 
         <!-- Main column -->

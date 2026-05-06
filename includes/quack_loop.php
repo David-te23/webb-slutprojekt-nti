@@ -51,7 +51,23 @@
 
                     <!-- KLICKBAR DEL: Text och Bilder -->
                     <div class="quack-content-clickable cursor-pointer" onclick="window.location.href='quack.php?id=<?= $quack['id'] ?>'">
-                        <p class="mt-1 mb-0 fs-5"><?= htmlspecialchars($display['content'] ?? '') ?></p>
+                        <p class="mt-1 mb-0 fs-5">
+                            <?php
+                             // Först htmlspecialchars för säkerhet
+                            $safeContent = htmlspecialchars($display['content'] ?? '');
+                            
+                            // letar efter hashtags och gör dem till länkar
+                            // länkar till search.php med hashtagen som query
+                            $formattedContent = preg_replace(
+                                '/#(\w+)/u', 
+                                '<a href="search.php?query=%23$1" class="hashtag-link" onclick="event.stopPropagation();">#$1</a>', 
+                                $safeContent
+                            );
+
+                            // Skriv ut med nl2br för att bevara radbrytningar
+                            echo nl2br($formattedContent);
+                             ?>
+                        </p>
 
                         <?php if (!empty($quack['images'])) : 
                             $imgCount = count($quack['images']);
