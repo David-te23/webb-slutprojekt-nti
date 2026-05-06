@@ -12,6 +12,14 @@ require_once __DIR__ . '/../includes/header.php';
                 <p class="login-subtitle">Create your account</p>
             </div>
 
+            <!-- Felmeddelande-block -->
+            <?php if (isset($_SESSION['reg_error'])): ?>
+                <div class="alert alert-danger border-0 shadow-sm text-center mb-4">
+                    <?= htmlspecialchars($_SESSION['reg_error']); ?>
+                    <?php unset($_SESSION['reg_error']); ?>
+                </div>
+            <?php endif; ?>
+
             <form action="actions/handle_register.php" method="POST">
                 <div class="mb-3">
                     <label for="username" class="login-label">Username:</label>

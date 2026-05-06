@@ -11,26 +11,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->execute([':username' => $username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        //kontrollera om användare finns och om lösenordet matchar den hashade versionen
+        // Kontrollera om användare finns och om lösenordet matchar
         if ($user && password_verify($password, $user['password'])) {
 
-            //logga in användaren genom att spara info i sessionen
+            // Spara info i sessionen
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['is_admin'] = $user['is_admin'];
 
-            header("Location: ../../public/index.php");
+            // Lyckad inloggning - skicka till index
+            header("Location: ../index.php");
             exit;
         } else {
-            $error = "Incorrect username or password.";
+            // Felaktiga uppgifter - spara felet i sessionen
+            $_SESSION['login_error'] = "Incorrect username or password.";
+            header("Location: ../login.php");
+            exit;
         }
     } catch (PDOException $e){
-        $error = "An error occured: " . $e->getMessage();
+        $_SESSION['login_error'] = "A database error occurred. Please try again.";
+        header("Location: ../login.php");
+        exit;
     }
+} else {
+    header("Location: ../login.php");
+    exit;
 }
-?>
-
-<!-- enkel visning av error i html -->
-<?php if (isset($error)): ?>
-    <p style="color: red;"><?php echo $error; ?></p>
-<?php endif; ?>

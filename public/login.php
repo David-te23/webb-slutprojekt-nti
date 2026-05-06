@@ -12,6 +12,22 @@ require_once __DIR__ . '/../includes/header.php';
                 <p class="login-subtitle">Please login</p>
             </div>
 
+            <!-- FELMEDDELANDE -->
+            <?php if (isset($_SESSION['login_error'])): ?>
+                <div class="alert alert-danger border-0 shadow-sm text-center mb-4">
+                    <?= htmlspecialchars($_SESSION['login_error']); ?>
+                    <?php unset($_SESSION['login_error']); ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- FRAMGÅNGSMEDDELANDE (från registrering) -->
+            <?php if (isset($_SESSION['reg_success'])): ?>
+                <div class="alert alert-success border-0 shadow-sm text-center mb-4">
+                    <?= htmlspecialchars($_SESSION['reg_success']); ?>
+                    <?php unset($_SESSION['reg_success']); ?>
+                </div>
+            <?php endif; ?>
+
             <form action="actions/handle_login.php" method="POST">
                 <div class="mb-3">
                     <label for="username" class="login-label">Username:</label>
@@ -31,7 +47,6 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="text-center mt-2">
                 <p class="mb-0">Don't have an account?</p>
                 <a href="register.php" class="login-link-bold">Register here</a>
-                
                 <div class="mt-3">
                     <a href="#" class="login-link-small">Forgot your password?</a>
                 </div>
