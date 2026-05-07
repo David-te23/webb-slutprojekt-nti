@@ -140,7 +140,7 @@ document.addEventListener('click', function(e) {
 });
 
 
-//Ta bort quack AJAX
+// --- Ta bort quack AJAX ---
 let quackIdToDelete = null;
 let quackElementToRemove = null;
 
@@ -170,11 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmDeleteBtn.addEventListener('click', function() {
             if (!quackIdToDelete || !quackElementToRemove) return;
 
-            // Skapa data att skicka till PHP
             const formData = new FormData();
             formData.append('quack_id', quackIdToDelete);
 
-            // Skicka AJAX-anropet
             fetch('actions/delete_quack.php', {
                 method: 'POST',
                 body: formData
@@ -182,21 +180,26 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    // Stäng modalen mjukt
-                    bsDeleteModal.hide();
+                    // Stäng modalen
+                    if (bsDeleteModal) bsDeleteModal.hide();
                     
-                    // Animera bort kortet från skärmen
-                    quackElementToRemove.style.opacity = '0';
-                    quackElementToRemove.style.transform = 'scale(0.9)';
-                    quackElementToRemove.style.transition = 'all 0.3s ease';
-                    
-                    // Ta bort elementet helt efter animationen
-                    setTimeout(() => {
-                        quackElementToRemove.remove();
-                        // Nollställ variablerna
-                        quackIdToDelete = null;
-                        quackElementToRemove = null;
-                    }, 300);
+                    // KOLLA OM VI ÄR PÅ ENSKILD INLÄGGSSIDA
+                    if (window.location.pathname.includes('quack.php')) {
+                        // Skicka användaren till startsidan
+                        window.location.href = 'index.php';
+                    } else {
+                        // Om användaren är i flödet/profilen - animera bort kortet
+                        quackElementToRemove.style.opacity = '0';
+                        quackElementToRemove.style.transform = 'scale(0.9)';
+                        quackElementToRemove.style.transition = 'all 0.3s ease';
+                        
+                        setTimeout(() => {
+                            quackElementToRemove.remove();
+                            // Nollställ variablerna
+                            quackIdToDelete = null;
+                            quackElementToRemove = null;
+                        }, 300);
+                    }
                 } else {
                     alert("Error: " + (data.error || "Could not delete"));
                 }
@@ -208,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
 
 
 
