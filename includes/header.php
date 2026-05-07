@@ -28,12 +28,20 @@ $isAdmin = false;
 if (isset($_SESSION['user_id'])) {
     $userId = $_SESSION['user_id'];
 
-    // 1. Användarinformation
+    // Användarinformation
     $stmt = $dbconn->prepare("SELECT * FROM users WHERE id =?");
     $stmt->execute([$userId]);
     $currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // 2. Notis-counts
+    if (!$currentUser) {
+        // Om sessionen finns men användaren inte hittas i databasen (om användaren tagits bort)
+        session_unset();
+        session_destroy();
+        header("Location: login.php");
+        exit;
+    }
+
+    // Notis-counts
     $stmtCount = $dbconn->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
     $stmtCount->execute([$userId]);
     $unreadCount = (int)$stmtCount->fetchColumn();
@@ -42,10 +50,10 @@ if (isset($_SESSION['user_id'])) {
     $stmtMsgCount->execute([$userId]);
     $unreadMessages = (int)$stmtMsgCount->fetchColumn();
 
-    // 3. Admin-status
+    // Admin-status
     $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
 
-    // 4. Trending & Suggestions (Hämtas bara om vi inte är på login/register)
+    // Trending & Suggestions (Hämtas bara om vi inte är på login/register)
     if (!in_array($currentPage, $publicPages)) {
         $trendingStmt = $dbconn->query("
             SELECT h.tag_name, COUNT(qh.quack_id) as usage_count 
@@ -89,6 +97,7 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="css/profile.css">
     <link rel="stylesheet" href="css/messages.css">
     <link rel="stylesheet" href="css/notifications.css">
+    <link rel="stylesheet" href="css/admin.css">
     
     <?php 
     if ($currentPage == 'login.php' || $currentPage == 'register.php'): ?>
@@ -103,6 +112,7 @@ if (isset($_SESSION['user_id'])) {
     <script src="js/follow_ajax.js" defer></script>
     <script src="js/quacktivity.js" defer></script>
     <script src="js/messages.js" defer></script>
+    <script src="js/admin.js"></script>
     
 </head>
 <body>
@@ -151,7 +161,7 @@ if (isset($_SESSION['user_id'])) {
     <div class="row gx-4">
 
     <?php 
-    $showSidebar = ($currentPage !== 'messages.php' && $currentPage !== 'login.php' && $currentPage !== 'register.php');
+    $showSidebar = ($currentPage !== 'messages.php' && $currentPage !== 'login.php' && $currentPage !== 'register.php' && $currentPage !== 'admin.php');
             
     if ($showSidebar): ?>
         <!-- Sidebar: Trending & Recommendations -->
