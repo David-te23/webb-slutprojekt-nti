@@ -1,0 +1,39 @@
+<?php
+session_start();
+require_once __DIR__ . '/../../database/db.php';
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
+    $quackId = (int)$_POST['quack_id'];
+    $userId = $_SESSION['user_id'];
+    $isAdmin = (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1);
+
+    // Kolla vem som äger quacket
+    $stmt = $dbconn->prepare("SELECT user_id FROM quacks WHERE id = ?");
+    $stmt->execute([$quackId]);
+    $ownerId = $stmt->fetchColumn();
+
+    if ($ownerId == $userId || $isAdmin) {
+        try {
+            // Radera allt som kan tänkas blockera raderingen av huvudquacket
+            $dbconn->prepare("DELETE FROM comments WHERE quack_id = ?")->execute([$quackId]);
+            $dbconn->prepare("DELETE FROM quack_hashtags WHERE quack_id = ?")->execute([$quackId]);
+            $dbconn->prepare("DELETE FROM likes WHERE quack_id = ?")->execute([$quackId]);
+            $dbconn->prepare("DELETE FROM quack_images WHERE quack_id = ?")->execute([$quackId]);
+            $dbconn->prepare("DELETE FROM notifications WHERE source_id = ? AND type != 'follow'")->execute([$quackId]);
+            
+            // Hantera requacks (om andra har delat detta quack)
+            $dbconn->prepare("DELETE FROM quacks WHERE parent_id = ?")->execute([$quackId]);
+
+            $delete = $dbconn->prepare("DELETE FROM quacks WHERE id = ?");
+            if ($delete->execute([$quackId])) {
+                echo json_encode(['success' => true]);
+                exit;
+            }
+        } catch (PDOException $e) {
+            echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+            exit;
+        }
+    }
+}
+echo json_encode(['success' => false, 'error' => 'Unauthorized']);

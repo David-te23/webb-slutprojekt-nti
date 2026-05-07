@@ -3,7 +3,7 @@
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="quackerNav">
-        <ul class="navbar-nav gap-lg-4">
+        <ul class="navbar-nav gap-lg-4 <?= !$isAdmin ? 'nav-not-admin' : '' ?>">
             <li class="nav-item">
                 <a class="nav-link text-white" href="index.php">Feed</a>
             </li>
@@ -31,6 +31,11 @@
                     <?php endif; ?>
                 </a>
             </li>
+            <?php if ($isAdmin): ?>
+                <li class="nav-item">
+                    <a class="nav-link text-warning fw-bold" href="admin.php">Admin Panel</a>
+                </li>
+            <?php endif; ?>
         </ul>
     </div>
 </nav>

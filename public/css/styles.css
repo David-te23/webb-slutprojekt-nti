@@ -396,8 +396,27 @@ aside.col-lg-3::-webkit-scrollbar {
     text-decoration: underline;
 }
 
+
+.header-col {
+    flex: 1 0 0% !important;
+    min-width: 0;
+}
+
 .navbar-nav {
-    margin-left: 100px !important;
+    margin-left: 0 !important;
+}
+
+.nav-not-admin {
+    margin-left: 80px !important;
+}
+
+.header-container {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.flex-basis-0 {
+    flex: 1 0 0% !important;
 }
 
 .user-search-item {
@@ -442,6 +461,38 @@ aside.col-lg-3::-webkit-scrollbar {
     flex-shrink: 0;
     padding-bottom: 3px;
 }
+
+.delete-quack-btn {
+    opacity: 0.4;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.delete-quack-btn:hover {
+    opacity: 1;
+    color: #dc3545 !important; /* Röd färg vid hover */
+    transform: scale(1.1);
+}
+
+#deleteQuackModal .modal-content {
+    background-color: #fff;
+}
+
+#deleteQuackModal .btn-danger {
+    background-color: #e0245e; /* Twitters röda färg för radering */
+    border: none;
+}
+
+#deleteQuackModal .btn-danger:hover {
+    background-color: #c91d52;
+}
+
+#deleteQuackModal .btn-light {
+    background-color: #eff3f4;
+    border: none;
+}
+
+
 
 @media (max-width: 991.98px) {
     .site-nav {

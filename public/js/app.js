@@ -140,6 +140,78 @@ document.addEventListener('click', function(e) {
 });
 
 
+//Ta bort quack AJAX
+let quackIdToDelete = null;
+let quackElementToRemove = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const deleteModalElement = document.getElementById('deleteQuackModal');
+    
+    const bsDeleteModal = deleteModalElement ? new bootstrap.Modal(deleteModalElement) : null;
+
+    // Lyssna på klick på papperskorgen i flödet
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.delete-quack-btn');
+        if (!btn) return;
+
+        // Spara ID och själva HTML-elementet (kortet)
+        quackIdToDelete = btn.dataset.quackId;
+        quackElementToRemove = btn.closest('.quack-card');
+
+        // Öppna modalen
+        if (bsDeleteModal) {
+            bsDeleteModal.show();
+        }
+    });
+
+    // Lyssna på klick på själva "Delete"-knappen INUTI modalen
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (!quackIdToDelete || !quackElementToRemove) return;
+
+            // Skapa data att skicka till PHP
+            const formData = new FormData();
+            formData.append('quack_id', quackIdToDelete);
+
+            // Skicka AJAX-anropet
+            fetch('actions/delete_quack.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Stäng modalen mjukt
+                    bsDeleteModal.hide();
+                    
+                    // Animera bort kortet från skärmen
+                    quackElementToRemove.style.opacity = '0';
+                    quackElementToRemove.style.transform = 'scale(0.9)';
+                    quackElementToRemove.style.transition = 'all 0.3s ease';
+                    
+                    // Ta bort elementet helt efter animationen
+                    setTimeout(() => {
+                        quackElementToRemove.remove();
+                        // Nollställ variablerna
+                        quackIdToDelete = null;
+                        quackElementToRemove = null;
+                    }, 300);
+                } else {
+                    alert("Error: " + (data.error || "Could not delete"));
+                }
+            })
+            .catch(err => {
+                console.error('Delete error:', err);
+                alert("An error occurred on the server.");
+            });
+        });
+    }
+});
+
+
+
+
  // --- EMOJI-PICKERS ---
 document.addEventListener('DOMContentLoaded', () => {
     function setupEmojiPicker(triggerId, containerId, textareaId, pickerId) {

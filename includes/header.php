@@ -21,29 +21,32 @@ if (!isset($_SESSION['user_id']) && !in_array($currentPage, $publicPages)) {
 }
 
 $currentUser = null;
-$unreadCount = 0; // standardvärde för alla notiser
-$unreadMessages = 0; //standardvärde för meddelande notiser
+$unreadCount = 0; 
+$unreadMessages = 0; 
+$isAdmin = false; 
 
 if (isset($_SESSION['user_id'])) {
     $userId = $_SESSION['user_id'];
 
-    // Hämta användarinformation
+    // 1. Användarinformation
     $stmt = $dbconn->prepare("SELECT * FROM users WHERE id =?");
-    $stmt->execute([$_SESSION['user_id']]);
+    $stmt->execute([$userId]);
     $currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Hämta antal olästa notiser för nav-bubblan
+    // 2. Notis-counts
     $stmtCount = $dbconn->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
-    $stmtCount->execute([$_SESSION['user_id']]);
+    $stmtCount->execute([$userId]);
     $unreadCount = (int)$stmtCount->fetchColumn();
 
     $stmtMsgCount = $dbconn->prepare("SELECT COUNT(*) FROM messages WHERE receiver_id = ? AND is_read = 0");
     $stmtMsgCount->execute([$userId]);
     $unreadMessages = (int)$stmtMsgCount->fetchColumn();
 
-    if (isset($_SESSION['user_id'])) {
-        $userId = $_SESSION['user_id'];
-    
+    // 3. Admin-status
+    $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+
+    // 4. Trending & Suggestions (Hämtas bara om vi inte är på login/register)
+    if (!in_array($currentPage, $publicPages)) {
         $trendingStmt = $dbconn->query("
             SELECT h.tag_name, COUNT(qh.quack_id) as usage_count 
             FROM hashtags h
@@ -54,26 +57,23 @@ if (isset($_SESSION['user_id'])) {
         ");
         $trendingTags = $trendingStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Hämta rekommenderade användare (You might know)
         $suggestionsStmt = $dbconn->prepare("
-        SELECT u.id, u.username, u.display_name, u.profile_image, 
+            SELECT u.id, u.username, u.display_name, u.profile_image, 
             COUNT(f2.follower_id) as mutual_followers
-        FROM users u
-        -- Hitta kopplingar via folk du följer
-        LEFT JOIN follows f2 ON u.id = f2.following_id 
-        AND f2.follower_id IN (SELECT following_id FROM follows WHERE follower_id = ?)
-        WHERE u.id != ? -- Inte du själv
-        AND u.id NOT IN (SELECT following_id FROM follows WHERE follower_id = ?) -- Inte folk du redan följer
-        GROUP BY u.id
-        ORDER BY mutual_followers DESC, RAND() -- Prioritera gemensamma vänner, sen slumpmässigt
-        LIMIT 3
+            FROM users u
+            LEFT JOIN follows f2 ON u.id = f2.following_id 
+            AND f2.follower_id IN (SELECT following_id FROM follows WHERE follower_id = ?)
+            WHERE u.id != ? 
+            AND u.id NOT IN (SELECT following_id FROM follows WHERE follower_id = ?) 
+            GROUP BY u.id
+            ORDER BY mutual_followers DESC, RAND() 
+            LIMIT 3
         ");
         $suggestionsStmt->execute([$userId, $userId, $userId]);
         $suggestions = $suggestionsStmt->fetchAll(PDO::FETCH_ASSOC);
-
     }
-    
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -109,7 +109,7 @@ if (isset($_SESSION['user_id'])) {
 <header class="site-header" id="siteheader">
     <div class="header-container container-fluid d-flex align-items-center justify-content-between px-3">
         
-        <!-- Vänster sida: nav + mobilsök -->
+        <!-- Vänster sida: nav + mobilsök (header-col tvingar symmetri) -->
         <div class="nav-container d-flex ps-0 flex-grow-1 flex-basis-0">
             <?php require __DIR__ . '/nav.php'; ?>
             
@@ -125,26 +125,26 @@ if (isset($_SESSION['user_id'])) {
             <button class="btn-close btn-close-white d-none" id="closeSearchBtn"></button>
         </div>
 
-        <!-- Mitten: Quacker logga (Hålls centrerad) -->
+        <!-- Mitten: Quacker logga (Hålls centrerad tack vare flex-basis-0 på sidokolumnerna) -->
         <div class="text-center header-logo-container">
             <a href="index.php">
                 <img src="../public/images/QuackerLogo.svg" alt="Quacker Logo" class="header-img">
             </a>
         </div>
 
-       <!-- höger sida: sökfält + profil -->
+       <!-- Höger sida: sökfält + profil (header-col tvingar symmetri) -->
         <div class="search-profile-container flex-grow-1 d-flex justify-content-end align-items-center flex-basis-0">
             <form action="search.php" method="GET" class="d-none d-lg-flex align-items-center m-0">
                 <input type="search" name="query" id="header-search" placeholder="Search Quacker" class="form-control me-3 qSearchBar">
             </form>
 
             <a href="profile.php?id=<?= $currentUser['id'] ?>" class="profile-button p-0 m-0">
-                <img src="<?= getPfpPath($currentUser['profile_image'] ?? 'default_pfp.jpg') ?>"
-                alt="Profile" class="header-img">
+                <img src="<?= getPfpPath($currentUser['profile_image'] ?? 'default_pfp.jpg') ?>" alt="Profile" class="header-img">
             </a>
         </div>
     </div>
 </header>
+
 
 
 <div class="container py-4">
