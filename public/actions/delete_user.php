@@ -2,18 +2,20 @@
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 require_once __DIR__ . '/../../database/db.php';
+require_once __DIR__ . '/../../includes/user_deletion_logic.php';
 
-// Säkerhetskoll
+header('Content-Type: application/json');
+
+// Säkerhetskoll: Endast admins får köra denna fil
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
-    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'error' => 'Ej behörig.']);
     exit;
 }
 
+// Hämta ID från POST
 $userId = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
 
 if ($userId <= 0) {
-    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'error' => 'Ogiltigt användar-ID.']);
     exit;
 }
@@ -21,55 +23,21 @@ if ($userId <= 0) {
 try {
     $dbconn->beginTransaction();
 
-    // Hantera REQUACKS (Rensa bort tomma requacks av användarens inlägg)
-    // Hämta ID:n för alla quacks som tillhör användaren som ska raderas
-    $idStmt = $dbconn->prepare("SELECT id FROM quacks WHERE user_id = ?");
-    $idStmt->execute([$userId]);
-    $userQuackIds = $idStmt->fetchAll(PDO::FETCH_COLUMN);
+    $stmtCheck = $dbconn->prepare("SELECT is_admin FROM users WHERE id = ?");
+    $stmtCheck->execute([$userId]);
+    $userToDelete = $stmtCheck->fetch();
 
-    if (!empty($userQuackIds)) {
-        $placeholders = implode(',', array_fill(0, count($userQuackIds), '?'));
-        
-        // Radera alla rena requacks (inlägg utan eget innehåll) som pekar på dessa inlägg
-        $delReqStmt = $dbconn->prepare("DELETE FROM quacks WHERE parent_id IN ($placeholders) AND content IS NULL");
-        $delReqStmt->execute($userQuackIds);
-
-        // För "Quote Quacks" (inlägg MED eget innehåll), nollställ bara parent_id
-        $updQuoteStmt = $dbconn->prepare("UPDATE quacks SET parent_id = NULL WHERE parent_id IN ($placeholders)");
-        $updQuoteStmt->execute($userQuackIds);
+    if ($userToDelete && $userToDelete['is_admin'] == 0) {
+        performFullUserDeletion($dbconn, $userId);
+        $dbconn->commit();
+        echo json_encode(['success' => true]);
+    } else {
+        throw new Exception("Kan inte radera en administratör.");
     }
-
-    // Ta bort kopplingar i kopplingstabeller (Hashtags och Bilder)
-    $dbconn->prepare("DELETE FROM quack_hashtags WHERE quack_id IN (SELECT id FROM quacks WHERE user_id = ?)")->execute([$userId]);
-    $dbconn->prepare("DELETE FROM quack_images WHERE quack_id IN (SELECT id FROM quacks WHERE user_id = ?)")->execute([$userId]);
-
-    // Ta bort interaktioner (Likes, Comments, Notifications)
-    $dbconn->prepare("DELETE FROM likes WHERE user_id = ? OR quack_id IN (SELECT id FROM quacks WHERE user_id = ?)")->execute([$userId, $userId]);
-    $dbconn->prepare("DELETE FROM comments WHERE user_id = ? OR quack_id IN (SELECT id FROM quacks WHERE user_id = ?)")->execute([$userId, $userId]);
-    
-    // Notifications: Ta bort där användaren är mottagare ELLER orsak
-    $dbconn->prepare("DELETE FROM notifications WHERE user_id = ? OR source_user_id = ?")->execute([$userId, $userId]);
-
-    // Meddelanden och Följare
-    $dbconn->prepare("DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?")->execute([$userId, $userId]);
-    $dbconn->prepare("DELETE FROM follows WHERE follower_id = ? OR following_id = ?")->execute([$userId, $userId]);
-
-    // Ta bort användarens egna Quacks
-    $dbconn->prepare("DELETE FROM quacks WHERE user_id = ?")->execute([$userId]);
-
-    // Ta slutligen bort användaren
-    $stmt = $dbconn->prepare("DELETE FROM users WHERE id = ? AND is_admin = 0");
-    $stmt->execute([$userId]);
-
-    $dbconn->commit();
-    
-    header('Content-Type: application/json');
-    echo json_encode(['success' => true]);
 
 } catch (Exception $e) {
     if ($dbconn->inTransaction()) { 
         $dbconn->rollBack(); 
     }
-    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }

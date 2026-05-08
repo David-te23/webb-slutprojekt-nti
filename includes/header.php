@@ -98,7 +98,7 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="css/messages.css">
     <link rel="stylesheet" href="css/notifications.css">
     <link rel="stylesheet" href="css/admin.css">
-    
+ 
     <?php 
     if ($currentPage == 'login.php' || $currentPage == 'register.php'): ?>
     <link rel="stylesheet" href="css/loginregister.css">
@@ -112,7 +112,8 @@ if (isset($_SESSION['user_id'])) {
     <script src="js/follow_ajax.js" defer></script>
     <script src="js/quacktivity.js" defer></script>
     <script src="js/messages.js" defer></script>
-    <script src="js/admin.js"></script>
+    <script src="js/admin.js" defer></script>
+    <script src="js/profile_edit.js" defer></script>
     
 </head>
 <body>
@@ -138,7 +139,7 @@ if (isset($_SESSION['user_id'])) {
         <!-- Mitten: Quacker logga (Hålls centrerad tack vare flex-basis-0 på sidokolumnerna) -->
         <div class="text-center header-logo-container">
             <a href="index.php">
-                <img src="../public/images/QuackerLogo.svg" alt="Quacker Logo" class="header-img">
+                <img src="../public/images/QuackerLogo.svg" alt="Quacker Logo" class="site-logo">
             </a>
         </div>
 

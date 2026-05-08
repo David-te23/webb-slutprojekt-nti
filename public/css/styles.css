@@ -38,7 +38,6 @@ body {
 .site-nav ul {
     list-style: none;
     display: flex;
-    /*gap: 40px;*/
     margin: 0;
     padding: 0;
 }
@@ -74,7 +73,7 @@ aside.col-lg-3 {
 }
 
 aside.col-lg-3::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
 }
 
 
@@ -98,7 +97,7 @@ aside.col-lg-3::-webkit-scrollbar {
     transform: translateY(-2px);
 }
 
-.header-img {
+.site-logo {
     height: 70px;
 }
 
@@ -116,6 +115,14 @@ aside.col-lg-3::-webkit-scrollbar {
 #header-search {
     height: 34px;
     width: 45%;
+}
+
+.header-img {
+    height: 100%;
+    width: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
 }
 
 .profile-button {
