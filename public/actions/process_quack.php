@@ -1,87 +1,50 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . '/../../database/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
-    $content = trim($_POST['quack_content']);
     $userId = $_SESSION['user_id'];
+    $displayName = trim($_POST['display_name']);
+    $bio = trim($_POST['bio']);
+    
+    // 1. Hantera profilbild (återanvänder din logik från quacks)
+    if (!empty($_FILES['profile_image']['name'])) {
+        $uploadDir = __DIR__ . '/../../uploads/pfp/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-    if (!empty($content) || !empty($_FILES['quack_images']['name'][0])) {
-        // Spara själva quacket
-        $stmt = $dbconn->prepare("INSERT INTO quacks (user_id, content, created_at) VALUES (?, ?, NOW())");
-        $stmt->execute([$userId, $content]);
-        $quackId = $dbconn->lastInsertId();
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $maxFileSize = 5 * 1024 * 1024; // 5MB räcker för profilbilder
 
-        // --- HASHTAG-LOGIK START ---
-        // Hitta alla ord som börjar med # (stödjer även ÅÄÖ med /u)
-        preg_match_all('/#(\w+)/u', $content, $matches);
-        $hashtags = array_unique($matches[1]); // $matches[1] innehåller orden utan själva #
+        if ($_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+            $tmpName = $_FILES['profile_image']['tmp_name'];
+            
+            if ($_FILES['profile_image']['size'] <= $maxFileSize) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = finfo_file($finfo, $tmpName);
+                finfo_close($finfo);
 
-        foreach ($hashtags as $tag) {
-            $tag = mb_strtolower($tag); // Gör till små bokstäver för sökbarhet
-
-            // Spara taggen om den inte finns
-            $stmtTag = $dbconn->prepare("INSERT IGNORE INTO hashtags (tag_name) VALUES (?)");
-            $stmtTag->execute([$tag]);
-
-            // Hämta ID för taggen
-            $stmtGetTag = $dbconn->prepare("SELECT id FROM hashtags WHERE tag_name = ?");
-            $stmtGetTag->execute([$tag]);
-            $tagId = $stmtGetTag->fetchColumn();
-
-            // Koppla taggen till quacket
-            if ($tagId) {
-                $stmtLink = $dbconn->prepare("INSERT IGNORE INTO quack_hashtags (quack_id, hashtag_id) VALUES (?, ?)");
-                $stmtLink->execute([$quackId, $tagId]);
-            }
-        }
-        // --- HASHTAG-LOGIK SLUT ---
-
-        // --- NOTIS-LOGIK START ---
-        $stmtFollowers = $dbconn->prepare("SELECT follower_id FROM follows WHERE following_id = ?");
-        $stmtFollowers->execute([$userId]);
-        $followers = $stmtFollowers->fetchAll(PDO::FETCH_COLUMN);
-
-        if (!empty($followers)) {
-            $notifStmt = $dbconn->prepare("INSERT INTO notifications (user_id, source_user_id, type, source_id, is_read) VALUES (?, ?, 'quack', ?, 0)");
-            foreach ($followers as $followerId) {
-                $notifStmt->execute([$followerId, $userId, $quackId]);
-            }
-        }
-        // --- NOTIS-LOGIK SLUT ---
-
-        // --- BILD/VIDEO-LOGIK ---
-        if (!empty($_FILES['quack_images']['name'][0])) {
-            $uploadDir = __DIR__ . '/../uploads/quacks/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-
-            $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
-            $maxFileSize = 10 * 1024 * 1024; 
-
-            foreach ($_FILES['quack_images']['tmp_name'] as $key => $tmpName) {
-                if ($_FILES['quack_images']['error'][$key] === UPLOAD_ERR_OK) {
-                    if ($_FILES['quack_images']['size'][$key] > $maxFileSize) continue;
-
-                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                    $mimeType = finfo_file($finfo, $tmpName);
-                    finfo_close($finfo);
-
-                    if (!in_array($mimeType, $allowedMimeTypes)) continue;
-
-                    $extension = pathinfo($_FILES['quack_images']['name'][$key], PATHINFO_EXTENSION);
+                if (in_array($mimeType, $allowedMimeTypes)) {
+                    $extension = pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION);
+                    // Använder din metod med random_bytes för säkra filnamn
                     $fileName = bin2hex(random_bytes(16)) . '.' . $extension;
                     $targetPath = $uploadDir . $fileName;
 
                     if (move_uploaded_file($tmpName, $targetPath)) {
-                        $dbPath = 'uploads/quacks/' . $fileName;
-                        $imgStmt = $dbconn->prepare("INSERT INTO quack_images (quack_id, image_path) VALUES (?, ?)");
-                        $imgStmt->execute([$quackId, $dbPath]);
+                        // Vi sparar bara filnamnet i users-tabellen enligt din header-funktion
+                        $stmt = $dbconn->prepare("UPDATE users SET profile_image = ? WHERE id = ?");
+                        $stmt->execute([$fileName, $userId]);
                     }
                 }
             }
         }
     }
-}
 
-header("Location: ../index.php");
-exit;
+    // 2. Uppdatera textinformationen
+    $stmt = $dbconn->prepare("UPDATE users SET display_name = ?, bio = ? WHERE id = ?");
+    $stmt->execute([$displayName, $bio, $userId]);
+
+    header("Location: ../public/profile.php?id=" . $userId);
+    exit;
+}
