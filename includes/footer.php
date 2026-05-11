@@ -9,7 +9,7 @@
             <!-- vänster sida, logga och copyright -->
             <div class="d-flex flex-column flex-md-row align-items-center mb-3 mb-md-0">
                 <a href="index.php">
-                    <img src="../public/images/QuackerLogo.svg" alt="Quacker Logo" class="header-img">
+                    <img src="../public/images/QuackerLogo.svg" alt="Quacker Logo" class="site-logo">
                 </a>
                 
                 <p class="m-0">&copy; <?= date('Y') ?> Quacker. All rights reserved.</p>

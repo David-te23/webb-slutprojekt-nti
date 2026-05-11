@@ -26,6 +26,7 @@ $quackStmt = $dbconn->prepare("
         u.username, u.display_name, u.profile_image,
         -- Originaldata för requacks
         orig_q.content AS orig_content,
+        orig_q.created_at AS orig_created_at,
         orig_u.username AS orig_username,
         orig_u.display_name AS orig_display_name,
         orig_u.profile_image AS orig_profile_image,

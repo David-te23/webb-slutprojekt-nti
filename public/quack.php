@@ -5,13 +5,14 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
 
 $quackId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// Hämta det specifika inlägget med användardata
+// Hämta det specifika inlägget med namngivna parametrar (:my_id och :quack_id)
 $stmt = $dbconn->prepare("
     SELECT 
         q.id, q.content, q.created_at, q.user_id, q.parent_id,
         u.username, u.display_name, u.profile_image,
         -- Originaldata om det är en requack
         orig_q.content AS orig_content,
+        orig_q.created_at AS orig_created_at,
         orig_u.username AS orig_username,
         orig_u.display_name AS orig_display_name,
         orig_u.profile_image AS orig_profile_image,
@@ -20,40 +21,37 @@ $stmt = $dbconn->prepare("
         (SELECT COUNT(*) FROM likes WHERE quack_id = COALESCE(q.parent_id, q.id)) as like_count,
         (SELECT COUNT(*) FROM comments WHERE quack_id = COALESCE(q.parent_id, q.id)) as comment_count,
         (SELECT COUNT(*) FROM quacks WHERE parent_id = COALESCE(q.parent_id, q.id) AND content IS NULL) as requack_count,
-        EXISTS(SELECT 1 FROM likes WHERE quack_id = COALESCE(q.parent_id, q.id) AND user_id = ?) as user_liked
+        -- Check för status (Använder nu :my_id istället för ?)
+        EXISTS(SELECT 1 FROM likes WHERE quack_id = COALESCE(q.parent_id, q.id) AND user_id = :my_id) as user_liked,
+        EXISTS(SELECT 1 FROM quacks WHERE parent_id = COALESCE(q.parent_id, q.id) AND user_id = :my_id AND content IS NULL) as user_requacked
     FROM quacks q
     JOIN users u ON q.user_id = u.id
     LEFT JOIN quacks orig_q ON q.parent_id = orig_q.id
     LEFT JOIN users orig_u ON orig_q.user_id = orig_u.id
-    WHERE q.id = ?
+    WHERE q.id = :quack_id -- Använder nu :quack_id istället för ?
 ");
-$stmt->execute([$_SESSION['user_id'] ?? 0, $quackId]);
+
+// Här mappar vi parametrarna mot nycklar i en associativ array. Detta tar helt bort ordningsproblem!
+$stmt->execute([
+    'my_id' => $_SESSION['user_id'] ?? 0,
+    'quack_id' => $quackId
+]);
 $quack = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Bestäm vad som ska visas (precis som i index)
-$isRequack = ($quack['content'] === null && $quack['parent_id'] !== null);
-$display = $isRequack ? [
-    'id' => $quack['parent_id'],
-    'content' => $quack['orig_content'],
-    'display_name' => $quack['orig_display_name'],
-    'username' => $quack['orig_username'],
-    'profile_image' => $quack['orig_profile_image'],
-    'user_id' => $quack['orig_user_id'],
-    'created_at' => $quack['created_at']
-] : $quack;
-
-
-if (!$display) {
+if (!$quack) {
     echo "<div class='container mt-5'><h2 class='text-white'>Quack not found.</h2></div>";
     require_once __DIR__ . '/../includes/footer.php';
     exit;
 }
 
-// Hämta bilder till inlägget
+
+// Hämta bilder till inlägget (Om det är en requack hämtas bilderna från originalinlägget)
+$targetId = $quack['parent_id'] ?? $quack['id'];
 $imgStmt = $dbconn->prepare("SELECT image_path FROM quack_images WHERE quack_id = ?");
-$imgStmt->execute([$quackId]);
+$imgStmt->execute([$targetId]);
 $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 
 <div class="container mt-4">
     <div class="row justify-content-center">
@@ -63,51 +61,7 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                 <i class="bi bi-arrow-left"></i> Back
             </button>
 
-            <div class="quack-card bg-white p-4 rounded shadow">
-                <div class="d-flex gap-3 mb-3">
-                    <a href="profile.php?id=<?= $display['user_id'] ?>">
-                    <img src="<?= getPfpPath($display['profile_image']) ?>" class="profile-pic-placeholder">
-                    </a>
-                    <div>
-                        <h5 class="fw-bold mb-0"><?= htmlspecialchars($display['display_name']) ?></h5>
-                        <p class="text-muted small">@<?= htmlspecialchars($display['username']) ?></p>
-                    </div>
-                </div>
-
-                <p class="fs-4"><?= htmlspecialchars($display['content']) ?></p>
-
-                
-                <?php if (!empty($images)): 
-                    $imgCount = count($images);
-                    // Max 4 grid
-                    $gridClass = ($imgCount > 4) ? 'grid-4' : 'grid-' . $imgCount;
-                ?>
-                    <div class="quack-image-gallery <?= $gridClass ?> mt-3 mb-3">
-                        <?php foreach ($images as $index => $img): ?>
-                            <div class="gallery-item cursor-pointer"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#imageModal"
-                                        data-bs-slide-to="<?= $index ?>">
-                                <!-- Kontrollera om det är video eller bild -->
-                                <?php 
-                                $fileExt = pathinfo($img['image_path'], PATHINFO_EXTENSION);
-                                if (in_array($fileExt, ['mp4', 'webm'])): 
-                                ?>
-                                    <video src="../<?= htmlspecialchars($img['image_path']) ?>" controls class="rounded"></video>
-                                <?php else: ?>
-                                    <img src="../<?= htmlspecialchars($img['image_path']) ?>" class="img-fluid rounded">
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-                <hr>
-                <div class="d-flex justify-content-between text-muted">
-                    <span><?= date('H:i • M j, Y', strtotime($display['created_at'])) ?></span>
-                </div>
-
-                 <!-- Interaktionsikoner -->
-                 <?php include __DIR__ . '/../includes/quack_actions.php'; ?>
+            <?php include __DIR__ . '/../includes/quack_item.php' ?>
 
                 <!-- Kommentarssektion -->
                 <div class="comment-section mt-4">

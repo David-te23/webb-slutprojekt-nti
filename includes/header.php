@@ -114,6 +114,7 @@ if (isset($_SESSION['user_id'])) {
     <script src="js/messages.js" defer></script>
     <script src="js/admin.js" defer></script>
     <script src="js/profile_edit.js" defer></script>
+    <script src="js/live_search.js" defer></script>
     
 </head>
 <body>
@@ -132,6 +133,7 @@ if (isset($_SESSION['user_id'])) {
 
             <form action="search.php" method="GET" class="mobile-search-form flex-grow-1">
                 <input type="search" name="query" id="mobileInput" class="form-control mobile-search-input" placeholder="Search Quacker...">
+                <div id="mobile-search-results" class="search-results-dropdown"></div>
             </form>
             <button class="btn-close btn-close-white d-none" id="closeSearchBtn"></button>
         </div>
@@ -145,8 +147,9 @@ if (isset($_SESSION['user_id'])) {
 
        <!-- Höger sida: sökfält + profil (header-col tvingar symmetri) -->
         <div class="search-profile-container flex-grow-1 d-flex justify-content-end align-items-center flex-basis-0">
-            <form action="search.php" method="GET" class="d-none d-lg-flex align-items-center m-0">
-                <input type="search" name="query" id="header-search" placeholder="Search Quacker" class="form-control me-3 qSearchBar">
+            <form action="search.php" method="GET" class="d-none d-lg-flex align-items-center m-0 search-container">
+                <input type="search" name="query" id="header-search" placeholder="Search Quacker" class="form-control me-3 qSearchBar" autocomplete="off">
+                <div id="desktop-search-results" class="search-results-dropdown"></div>
             </form>
 
             <a href="profile.php?id=<?= $currentUser['id'] ?>" class="profile-button p-0 m-0">

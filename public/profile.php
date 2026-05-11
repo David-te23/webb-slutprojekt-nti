@@ -140,7 +140,7 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
                     <a href="actions/logout.php" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold"><i class="bi bi-box-arrow-right"></i> Log out</a>
                 <?php else: ?>
                     <div class="d-flex gap-2">
-                        <a href="messages.php?user_id=<?= $viewUserId ?>" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold"><i class="bi bi-envelope"></i></a>
+                        <a href="messages.php?user_id=<?= $viewUserId ?>" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">Message</a>
                         <button id="follow-btn" data-user-id="<?= $viewUserId ?>" data-action="<?= $isFollowing ? 'unfollow' : 'follow' ?>" class="btn <?= $isFollowing ? 'btn-outline-danger' : 'btn-light' ?> btn-sm rounded-pill px-4 fw-bold"><?= $isFollowing ? 'Unfollow' : 'Follow' ?></button>
                     </div>
                 <?php endif; ?> 

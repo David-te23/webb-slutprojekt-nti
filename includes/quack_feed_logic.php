@@ -1,9 +1,12 @@
 <?php
+// quack_feed_logic.php
 $filter = $_GET['filter'] ?? 'all';
 
 $sql = "SELECT q.id, q.content, q.created_at, q.user_id, q.parent_id,
                u.username, u.display_name, u.profile_image,
-               orig_q.content AS orig_content, orig_u.username AS orig_username,
+               orig_q.content AS orig_content, 
+               orig_q.created_at AS orig_created_at, -- ÄNDRING: Hämtar originalets tidsstämpel
+               orig_u.username AS orig_username,
                orig_u.display_name AS orig_display_name, orig_u.profile_image AS orig_profile_image,
                orig_u.id AS orig_user_id,
                (SELECT COUNT(*) FROM likes WHERE quack_id = COALESCE(q.parent_id, q.id)) AS like_count,
