@@ -58,7 +58,7 @@ if (!empty($notifications)) {
                    class="list-group-item list-group-item-action d-flex align-items-start py-3 <?= $isUnread ? 'bg-unread' : '' ?>">
                     
                     <div class="me-3">
-                        <img src="<?= getPfpPath($notification['profile_image']) ?>" 
+                        <img src="<?= getPfpPath($notification['profile_image']) ?>" alt="Profile image" 
                              alt="Profile" 
                              class="rounded-circle shadow-sm notification-img">
                     </div>

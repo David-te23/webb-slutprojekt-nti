@@ -106,7 +106,7 @@ $quacks = $quackStmt->fetchAll(PDO::FETCH_ASSOC);
                             <!-- Vänster sida: Profilbild, Namn och Information -->
                             <div class="col-12 col-md-7 col-lg-8 mb-3 mb-md-0">
                                 <a href="admin.php?user_id=<?= $user['id'] ?>" class="d-flex gap-3 align-items-center text-decoration-none">
-                                    <img src="<?= getPfpPath($user['profile_image']) ?>" class="admin-avatar flex-shrink-0">
+                                    <img src="<?= getPfpPath($user['profile_image']) ?>" class="admin-avatar flex-shrink-0" alt="Profile image">
                                     <div class="text-truncate">
                                         <!-- Denna container håller både namngruppen och mailen på samma rad -->
                                         <div class="d-flex flex-wrap align-items-center gap-3">
