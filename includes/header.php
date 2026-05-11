@@ -13,10 +13,18 @@ function getPfpPath($fileName) {
 }
 
 $currentPage = basename($_SERVER['PHP_SELF']);
-$publicPages = ['login.php', 'register.php'];
+$publicPages = ['login.php', 'register.php', 'forgot_password.php', 'reset_password.php', 'info.php'];
 
 if (!isset($_SESSION['user_id']) && !in_array($currentPage, $publicPages)) {
     header("Location: login.php");
+    exit;
+}
+
+// Sidor som inloggade aldrig ska se
+$authOnlyPages = ['login.php', 'register.php'];
+
+if (isset($_SESSION['user_id']) && in_array($currentPage, $authOnlyPages)) {
+    header("Location: index.php");
     exit;
 }
 
@@ -91,37 +99,58 @@ if (isset($_SESSION['user_id'])) {
     <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) : 'Quacker' ?></title>
     <link rel="icon" type="image/svg+xml" href="../public/images/QuackerLogo.svg">
 
-    <!-- CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <!-- Bas-CSS (alltid med) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/profile.css">
-    <link rel="stylesheet" href="css/messages.css">
-    <link rel="stylesheet" href="css/notifications.css">
-    <link rel="stylesheet" href="css/admin.css">
- 
-    <?php 
-    if ($currentPage == 'login.php' || $currentPage == 'register.php'): ?>
-    <link rel="stylesheet" href="css/loginregister.css">
+
+    <!-- Sid-specifik CSS -->
+    <?php if ($currentPage == 'profile.php'): ?>
+        <link rel="stylesheet" href="css/profile.css">
+    <?php elseif ($currentPage == 'messages.php'): ?>
+        <link rel="stylesheet" href="css/messages.css">
+    <?php elseif ($currentPage == 'notifications.php'): ?>
+        <link rel="stylesheet" href="css/notifications.css">
+    <?php elseif ($currentPage == 'admin.php'): ?>
+        <link rel="stylesheet" href="css/admin.css">
     <?php endif; ?>
 
-    <!-- JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+    <!-- CSS för Auth-sidor -->
+    <?php 
+    $authPages = ['login.php', 'register.php', 'forgot_password.php', 'reset_password.php'];
+    if (in_array($currentPage, $authPages)): ?>
+        <link rel="stylesheet" href="css/loginregister.css">
+    <?php endif; ?>
+
+    <!-- Bas-JS (Bootstrap och App-logik) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="js/app.js" defer></script>
-    <script src="js/index.js" defer></script>
-    <script src="js/follow_ajax.js" defer></script>
-    <script src="js/quacktivity.js" defer></script>
-    <script src="js/messages.js" defer></script>
-    <script src="js/admin.js" defer></script>
-    <script src="js/profile_edit.js" defer></script>
-    <script src="js/live_search.js" defer></script>
-    
+
+    <!-- Sid-specifik JS -->
+    <?php if (!in_array($currentPage, $authPages)): ?>
+        <!-- Saker som bara behövs när man är inloggad -->
+        <script src="js/follow_ajax.js" defer></script>
+        <script src="js/live_search.js" defer></script>
+        <script src="js/quacktivity.js" defer></script>
+        
+        <?php if ($currentPage == 'index.php'): ?>
+            <script src="js/index.js" defer></script>
+        <?php elseif ($currentPage == 'messages.php'): ?>
+            <script src="js/messages.js" defer></script>
+        <?php elseif ($currentPage == 'admin.php'): ?>
+            <script src="js/admin.js" defer></script>
+        <?php elseif ($currentPage == 'profile.php'): ?>
+            <script src="js/profile_edit.js" defer></script>
+        <?php endif; ?>
+        
+        <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+    <?php endif; ?>
 </head>
+
 <body>
 <header class="site-header" id="siteheader">
     <div class="header-container container-fluid d-flex align-items-center justify-content-between px-3">
         
-        <!-- Vänster sida: nav + mobilsök (header-col tvingar symmetri) -->
+        <!-- Vänster sida: nav + mobilsök -->
         <div class="nav-container d-flex ps-0 flex-grow-1 flex-basis-0">
             <?php require __DIR__ . '/nav.php'; ?>
             
@@ -138,18 +167,26 @@ if (isset($_SESSION['user_id'])) {
             <button class="btn-close btn-close-white d-none" id="closeSearchBtn"></button>
         </div>
 
-        <!-- Mitten: Quacker logga (Hålls centrerad tack vare flex-basis-0 på sidokolumnerna) -->
+        <!-- Mitten: Quacker logga -->
         <div class="text-center header-logo-container">
             <a href="index.php">
                 <img src="../public/images/QuackerLogo.svg" alt="Quacker Logo" class="site-logo">
             </a>
         </div>
 
-       <!-- Höger sida: sökfält + profil (header-col tvingar symmetri) -->
+       <!-- Höger sida: sökfält + profil -->
         <div class="search-profile-container flex-grow-1 d-flex justify-content-end align-items-center flex-basis-0">
             <form action="search.php" method="GET" class="d-none d-lg-flex align-items-center m-0 search-container">
-                <input type="search" name="query" id="header-search" placeholder="Search Quacker" class="form-control me-3 qSearchBar" autocomplete="off">
-                <div id="desktop-search-results" class="search-results-dropdown"></div>
+                <div class="position-relative search-input-wrapper">
+                    <!-- Sök-ikon -->
+                    <span class="search-icon-inside">
+                        <svg xmlns="http://w3.org" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                    </span>
+                    <input type="search" name="query" id="header-search" placeholder="Search Quacker" class="form-control qSearchBar" autocomplete="off">
+                    <div id="desktop-search-results" class="search-results-dropdown"></div>
+                </div>
             </form>
 
             <a href="profile.php?id=<?= $currentUser['id'] ?>" class="profile-button p-0 m-0">
@@ -165,7 +202,15 @@ if (isset($_SESSION['user_id'])) {
     <div class="row gx-4">
 
     <?php 
-    $showSidebar = ($currentPage !== 'messages.php' && $currentPage !== 'login.php' && $currentPage !== 'register.php' && $currentPage !== 'admin.php');
+    $showSidebar = !in_array($currentPage, [
+        'messages.php',
+        'login.php',
+        'register.php',
+        'admin.php',
+        'forgot_password.php',
+        'reset_password.php',
+        'info.php'
+    ]);
             
     if ($showSidebar): ?>
         <!-- Sidebar: Trending & Recommendations -->
@@ -193,7 +238,7 @@ if (isset($_SESSION['user_id'])) {
                     <div class="suggestion-wrapper d-flex align-items-center justify-content-between mb-3 p-2 rounded shadow-sm bg-white">
                         <!-- Vänster sida: Klickbar profilinfo -->
                         <a href="profile.php?id=<?= $suggestedUser['id'] ?>" class="suggestion-item d-flex align-items-center text-decoration-none text-dark flex-grow-1 overflow-hidden">
-                            <img src="<?= getPfpPath($suggestedUser['profile_image']) ?>" class="suggestion-pfp me-2">
+                            <img src="<?= getPfpPath($suggestedUser['profile_image']) ?>" class="suggestion-pfp me-2" alt="Profile">
                             
                             <div class="user-info text-truncate">
                                 <div class="fw-bold lh-1 text-truncate-custom"><?= htmlspecialchars($suggestedUser['display_name']) ?></div>

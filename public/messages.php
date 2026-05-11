@@ -42,7 +42,7 @@ if ($contactId) {
                 </a>
                 
                 <a href="profile.php?id=<?= $contactUser['id'] ?>" class="text-decoration-none">
-                    <img src="<?= getPfpPath($contactUser['profile_image']) ?>" class="rounded-circle me-2 msg_pfp_sm">
+                    <img src="<?= getPfpPath($contactUser['profile_image']) ?>" class="rounded-circle me-2 msg_pfp_sm" alt="Profile image">
                 </a>
                 <div class="overflow-hidden">
                     <div class="fw-bold lh-1 text-truncate"><?= htmlspecialchars($contactUser['display_name']) ?></div>
@@ -66,7 +66,7 @@ if ($contactId) {
                         
                         <label for="chat-image-input" class="btn btn-link p-0 text-success mb-0 cursor-pointer">
                             <svg class="new-quack-icon" width="24" height="24" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 0H2V16H14V5L9 0ZM7 6V8H5V10H7V12H9V10H11V8H9V6H7Z"></path></svg>
-                            <input type="file" id="chat-image-input" name="chat_image" accept="image/*" class="d-none">
+                            <input type="file" id="chat-image-input" name="chat_image" accept="image/*,video/*" class="d-none">
                         </label>
                         
                         <input type="text" id="chat-input-field" name="message_text" class="form-control rounded-pill" placeholder="Message" autocomplete="off">
@@ -110,7 +110,7 @@ if ($contactId) {
 
                     foreach ($allUsers as $user): ?>
                         <a href="messages.php?user_id=<?= $user['id'] ?>" class="list-group-item list-group-item-action d-flex align-items-center p-3 border-0 rounded user-search-item">
-                            <img src="<?= getPfpPath($user['profile_image']) ?>" class="rounded-circle me-3 msg_pfp">
+                            <img src="<?= getPfpPath($user['profile_image']) ?>" class="rounded-circle me-3 msg_pfp" alt="Profile image">
                             <div>
                                 <div class="fw-bold small"><?= htmlspecialchars($user['display_name']) ?></div>
                                 <div class="text-muted small">@<?= htmlspecialchars($user['username']) ?></div>
@@ -128,7 +128,7 @@ if ($contactId) {
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content bg-transparent border-0">
             <div class="modal-body p-0 text-center position-relative">
-                <img src="" id="modalImage" class="img-fluid rounded shadow-lg modal-img">
+                <img src="" id="modalImage" class="img-fluid rounded shadow-lg modal-img" alt="Fullscreen image">
                 <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
             </div>
         </div>

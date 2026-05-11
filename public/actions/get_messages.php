@@ -14,9 +14,24 @@ foreach ($messages as $msg):
     $sentByMe = ($msg['sender_id'] == $myId); ?>
     <div class="d-flex mb-3 <?= $sentByMe ? 'justify-content-end' : 'justify-content-start' ?>">
         <div class="message-bubble <?= $sentByMe ? 'sent' : 'received' ?>">
-            <?php if ($msg['image_path']): ?>
-                <img src="../uploads/messages/<?= htmlspecialchars($msg['image_path']) ?>" class="chat-img-msg img-fluid rounded mb-1">
+            
+            <?php if ($msg['image_path']): 
+                $filePath = $msg['image_path'];
+                $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+                $videoExtensions = ['mp4', 'webm', 'ogg', 'mov'];
+                
+                if (in_array($ext, $videoExtensions)): ?>
+                    <!-- Visa som VIDEO -->
+                    <video controls class="chat-img-msg img-fluid rounded mb-1" style="max-width: 100%; max-height: 300px;">
+                        <source src="../uploads/messages/<?= htmlspecialchars($filePath) ?>" type="video/<?= $ext ?>">
+                        Your browser does not support the video tag.
+                    </video>
+                <?php else: ?>
+                    <!-- Visa som BILD -->
+                    <img src="../uploads/messages/<?= htmlspecialchars($filePath) ?>" class="chat-img-msg img-fluid rounded mb-1" alt="Chat image">
+                <?php endif; ?>
             <?php endif; ?>
+
             <?php if ($msg['message_text']): ?>
                 <div class="message-text"><?= htmlspecialchars($msg['message_text']) ?></div>
             <?php endif; ?>

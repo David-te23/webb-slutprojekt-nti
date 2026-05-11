@@ -17,9 +17,9 @@
 
             <!-- Höger sida, länkar -->
             <nav class="footer-links d-flex flex-column flex-md-row align-items-center gap-3 gap-md-4">
-                <a href="#">About us</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">Privacy Policy</a>
+                <a href="info.php?tab=about">About us</a>
+                <a href="info.php?tab=terms">Terms of Service</a>
+                <a href="info.php?tab=privacy">Privacy Policy</a>
             </nav>
         </div>
     </div>

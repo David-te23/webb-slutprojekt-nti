@@ -254,6 +254,18 @@ aside.col-lg-3::-webkit-scrollbar {
 .qSearchBar {
     width: 300px !important;
     min-width: 200px;
+    padding-left: 40px !important;
+    border: 1px solid transparent !important;
+}
+
+.search-icon-inside {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-58%);
+    color: #6c757d; 
+    z-index: 10;
+    pointer-events: none; 
 }
 
 .nav-container {
@@ -361,50 +373,117 @@ aside.col-lg-3::-webkit-scrollbar {
     object-fit:cover;
 }
 
+/* Grundinställningar för hela galleriet */
 .quack-image-gallery {
-    display: grid;
-    gap: 2px;
+    display: grid !important;
+    gap: 2px !important;
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid #e1e8ed;
     width: 100%;
     max-width: 500px;
+    aspect-ratio: 16 / 9;
+}
+
+/* Tvinga VARJE cell att fylla ut hela sitt område */
+.gallery-item {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: relative;
+    overflow: hidden;
 }
 
 .gallery-item img,
 .gallery-item video {
     width: 100% !important;
     height: 100% !important;
-    object-fit: cover;
-    display: block;
+    object-fit: cover !important;
+    flex-shrink: 0;
+    min-width: 100%;
+    min-height: 100%;
 }
 
-/* Logik för olika antal bilder */
-.grid-1 { grid-template-columns: 1fr; }
+/* --- GRID LOGIK --- */
 
-.grid-2 { grid-template-columns: 1fr 1fr; }
+/* 1 bild: Behåll naturlig form men begränsa höjden */
+.grid-1 { 
+    display: block !important; 
+    aspect-ratio: auto !important; 
+    max-height: 500px; 
+}
 
+/* 2 bilder: Två kolumner, en rad */
+.grid-2 { 
+    grid-template-columns: 1fr 1fr !important; 
+    grid-template-rows: 1fr !important; 
+}
+
+/* 3 bilder: En stor till vänster, två små till höger */
 .grid-3 {
-    grid-template-columns: 1.2fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: 1fr 1fr !important;
 }
 .grid-3 .gallery-item:first-child {
-    grid-row: span 2;
+    grid-row: span 2 !important;
 }
 
+/* 4 bilder: kvadratiskt mönster */
 .grid-4 {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: 1fr 1fr !important;
 }
 
-.grid-2, .grid-3, .grid-4 {
-    grid-auto-rows: 1fr;
+/* --- GRID LOGIK SLUT --- */
+
+.quack-card-clickable .quack-video-link {
+    pointer-events: none;
+}
+
+.p-4.rounded.shadow .quack-video-link {
+    pointer-events: auto !important;
 }
 
 .remove-selected-btn {
     font-size: 0.5rem;
     margin: 2px;
 }
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: rgba(0, 0, 0, 0.6); /* Svart cirkel med 60% synlighet */
+    background-size: 50% 50%;
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#quackCarousel .carousel-control-prev,
+#quackCarousel .carousel-control-next {
+    width: 60px;
+    background: none;
+    opacity: 0.8;
+}
+
+#quackCarousel video {
+    position: relative;
+    z-index: 1;
+}
+
+/* Pilarnas ikoner */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Flytta ut pilarna lite så de inte täcker mitten av bilden */
+.carousel-control-prev { left: -50px; }
+.carousel-control-next { right: -50px; }
+
 
 .like-btn.is-liked svg,
 .like-btn.is-liked svg path {
@@ -455,6 +534,10 @@ aside.col-lg-3::-webkit-scrollbar {
     text-decoration: underline;
 }
 
+.fullscreen-img {
+    max-height: 85vh;
+    object-fit: contain; 
+}
 
 .header-col {
     flex: 1 0 0% !important;
@@ -551,6 +634,47 @@ aside.col-lg-3::-webkit-scrollbar {
     border: none;
 }
 
+#quackCarousel img, 
+#quackCarousel video {
+    max-height: 85vh;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
+
+#imageModal .btn-close {
+    position: fixed !important;
+    top: 30px;
+    right: 30px;
+    
+    /* Tvinga bakgrunden att vara mörk och ta bort ALLA filter */
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    background-image: none !important;
+    filter: none !important; /* VIKTIGT: Detta tar bort den vita/gråa hinnan */
+    
+    /* Centrera krysset */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* Storlek */
+    width: 3rem !important;
+    height: 3rem !important;
+    border-radius: 50% !important;
+    border: none !important;
+    opacity: 1 !important;
+}
+
+#imageModal .btn-close::before {
+    content: "✕";
+    color: white !important;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
 
 
 @media (max-width: 991.98px) {
@@ -625,10 +749,48 @@ aside.col-lg-3::-webkit-scrollbar {
         max-height: 300px; /* Något lägre på mobilen för att inte dölja hela skärmen */
     }
 
+    /* FIX FÖR BILDER OCH MODAL PÅ MOBIL */
+    #imageModal .modal-dialog {
+        max-width: 100vw !important; /* Låt modalen ta hela bredden på mobil */
+        margin: 0; /* Ta bort marginaler */
+    }
+
+    #imageModal .modal-content {
+        overflow: hidden !important; /* Förhindra att man kan scrolla i sidled */
+        background: #000 !important;
+        border: none !important;
+    }
+
+    /* Flytta IN pilarna på skärmen (viktigt!) */
+    #quackCarousel .carousel-control-prev {
+        left: 5px !important;
+        width: 40px !important;
+    }
+    #quackCarousel .carousel-control-next {
+        right: 5px !important;
+        width: 40px !important;
+    }
+
+    #imageModal .btn-close {
+        position: fixed !important; /* Gör den oberoende av bildens storlek */
+        top: 20px !important;
+        right: 20px !important;
+        background-color: rgba(0, 0, 0, 0.7) !important;
+        z-index: 2000 !important; /* Se till att den ligger överst av allt */
+    }
+    
+
+    /* Säkra att videon/bilden inte täcker hela skärmen så man inte hittar ut */
+    #quackCarousel img, 
+    #quackCarousel video {
+        max-height: 80vh !important;
+        object-fit: contain !important;
+    }
+
     .footer-links {
         flex-direction: row !important;
     }
-
+    
     .emoji-picker-container, 
     #reply-picker-container, 
     #chat-picker-container {

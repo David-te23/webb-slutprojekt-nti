@@ -33,12 +33,12 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <div class="mb-3">
                     <label for="password" class="login-label">Password:</label>
-                    <input type="password" name="password" id="password" class="form-control login-input" required>
+                    <input type="password" name="password" id="password" class="form-control login-input" required minlength="8">
                 </div>
 
                 <div class="mb-4">
                     <label for="confirm_password" class="login-label">Confirm Password:</label>
-                    <input type="password" name="confirm_password" id="confirm_password" class="form-control login-input" required>
+                    <input type="password" name="confirm_password" id="confirm_password" class="form-control login-input" required minlength="8">
                 </div>
 
                 <button type="submit" class="btn btn-quack-large w-100 fw-bold shadow-sm mb-3">

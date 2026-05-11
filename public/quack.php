@@ -31,7 +31,6 @@ $stmt = $dbconn->prepare("
     WHERE q.id = :quack_id -- Använder nu :quack_id istället för ?
 ");
 
-// Här mappar vi parametrarna mot nycklar i en associativ array. Detta tar helt bort ordningsproblem!
 $stmt->execute([
     'my_id' => $_SESSION['user_id'] ?? 0,
     'quack_id' => $quackId
@@ -43,6 +42,10 @@ if (!$quack) {
     require_once __DIR__ . '/../includes/footer.php';
     exit;
 }
+
+// Om inlägget är en requack (har parent_id), sätt original-ID som mål för kommentarer
+$commentTargetId = !empty($quack['parent_id']) ? $quack['parent_id'] : $quack['id'];
+
 
 
 // Hämta bilder till inlägget (Om det är en requack hämtas bilderna från originalinlägget)
@@ -56,10 +59,14 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-12 custom-sidebar-card p-3">
-            <!-- Tillbaka-knapp -->
-            <button onclick="history.back()" class="btn btn-link text-black bg-white text-decoration-none mb-3">
-                <i class="bi bi-arrow-left"></i> Back
+           <!-- Tillbaka-knapp -->
+            <button onclick="history.back()" class="btn btn-link text-black bg-white text-decoration-none mb-3 d-flex align-items-center gap-2 fw-bold shadow-sm rounded-pill px-3">
+                <svg xmlns="http://w3.org" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back
             </button>
+
 
             <?php include __DIR__ . '/../includes/quack_item.php' ?>
 
@@ -69,14 +76,14 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                     
                     <!-- Formulär för att svara -->
                     <div class="bg-white p-3 rounded-4 shadow-sm mb-4">
-                        <form action="actions/process_comment.php" method="POST">
-                            <input type="hidden" name="quack_id" value="<?= $quack['id'] ?>">
+                        <form id="commentForm" action="actions/process_comment.php" method="POST">
+                            <input type="hidden" name="quack_id" value="<?= $commentTargetId ?>">
                             <div class="d-flex gap-3">
-                                <img src="<?= getPfpPath($currentUser['profile_image'] ?? 'default_pfp.jpg') ?>" 
+                                <img src="<?= getPfpPath($currentUser['profile_image'] ?? 'default_pfp.jpg') ?>" alt="Profile image"
                                     width="45" height="45" class="rounded-circle bg-secondary-subtle">
                                 <div class="flex-grow-1">
                                     <textarea name="comment" id="reply-textarea" class="form-control border-0 fs-5" 
-                                            placeholder="Quack your reply!" rows="2" required></textarea>
+                                            placeholder="Quack your reply!" rows="1" required></textarea>
                                     <hr>
                                     <div class="d-flex justify-content-between align-items-center mt-2 position-relative">
                                         <button type="button" id="reply-emoji-trigger" class="btn btn-link p-0 text-success new-quack-icon">
@@ -97,14 +104,16 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                         <?php
                         // Hämta kommentarer för detta quack
                         $commentStmt = $dbconn->prepare("
-                            SELECT c.*, u.username, u.display_name, u.profile_image 
-                            FROM comments c 
-                            JOIN users u ON c.user_id = u.id 
-                            WHERE c.quack_id = ? 
-                            ORDER BY c.created_at DESC
+                        SELECT c.*, u.username, u.display_name, u.profile_image 
+                        FROM comments c 
+                        JOIN users u ON c.user_id = u.id 
+                        WHERE c.quack_id = ? 
+                        ORDER BY c.created_at DESC
                         ");
-                        $commentStmt->execute([$display['id']]);
+
+                        $commentStmt->execute([$commentTargetId]);
                         $comments = $commentStmt->fetchAll(PDO::FETCH_ASSOC);
+
 
                         if (empty($comments)): ?>
                             <div class="text-center p-5 bg-dark rounded-4 border border-secondary">
@@ -115,7 +124,7 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="comment-card bg-white p-3 mb-2 rounded-4 shadow-sm border-start border-quack border-4">
                                     <div class="d-flex gap-3">
                                         <a href="profile.php?id=<?= $comment['user_id'] ?>">
-                                            <img src="<?= getPfpPath($comment['profile_image']) ?>" 
+                                            <img src="<?= getPfpPath($comment['profile_image']) ?>" alt="Profilbild"
                                                 width="40" height="40" class="rounded-circle">
                                         </a>
                                         <div class="flex-grow-1">
@@ -124,7 +133,23 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                                                     <span class="fw-bold text-dark"><?= htmlspecialchars($comment['display_name']) ?></span>
                                                     <span class="text-muted small">@<?= htmlspecialchars($comment['username']) ?></span>
                                                 </div>
-                                                <span class="text-muted small"><?= formatQuackTime($comment['created_at']) ?></span>
+                                                
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="text-muted small"><?= formatQuackTime($comment['created_at']) ?></span>
+                                                    
+                                                    <!-- RADERA-KNAPP FÖR KOMMENTAR -->
+                                                    <?php if ($comment['user_id'] == $_SESSION['user_id'] || $isAdmin): ?>
+                                                        <button class="btn btn-link text-danger p-0 delete-comment-btn" 
+                                                                data-comment-id="<?= $comment['id'] ?>" 
+                                                                title="Delete comment"
+                                                                style="line-height: 0;">
+                                                            <svg xmlns="http://w3.org" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                                            </svg>
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
                                             <p class="mb-0 text-dark mt-1"><?= htmlspecialchars($comment['content']) ?></p>
                                         </div>
@@ -151,7 +176,7 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="carousel-inner">
                         <?php foreach ($images as $index => $img): ?>
                             <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>">
-                                <img src="../<?= htmlspecialchars($img['image_path']) ?>" class="d-block w-100 rounded shadow" style="max-height: 85vh; object-fit: contain;">
+                                <img src="../<?= htmlspecialchars($img['image_path']) ?>" class="d-block w-100 rounded shadow fullscreen-img" alt="Fullscreen image">
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -164,6 +189,22 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                             <span class="carousel-control-next-icon" aria-hidden="true"></span>
                         </button>
                     <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal för att bekräfta borttagning av kommentar -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4 bg-dark text-white">
+            <div class="modal-body text-center p-4">
+                <h5 class="fw-bold mb-3">Delete Comment?</h5>
+                <p class="text-white-50 small mb-4">This action cannot be undone.</p>
+                <div class="d-grid gap-2">
+                    <button type="button" id="confirmDeleteCommentBtn" class="btn btn-danger rounded-pill fw-bold">Delete</button>
+                    <button type="button" class="btn btn-outline-light rounded-pill fw-bold" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </div>
         </div>

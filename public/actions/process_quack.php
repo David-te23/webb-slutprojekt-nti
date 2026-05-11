@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
 
         // --- BILD/VIDEO-LOGIK ---
         if (!empty($_FILES['quack_images']['name'][0])) {
-            $uploadDir = __DIR__ . '/../uploads/quacks/';
+            $uploadDir = __DIR__ . '/../../uploads/quacks/';
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
             $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
@@ -74,8 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
 
                     if (move_uploaded_file($tmpName, $targetPath)) {
                         $dbPath = 'uploads/quacks/' . $fileName;
-                        $imgStmt = $dbconn->prepare("INSERT INTO quack_images (quack_id, image_path) VALUES (?, ?)");
-                        $imgStmt->execute([$quackId, $dbPath]);
+                        
+                        $imgStmt = $dbconn->prepare("INSERT INTO quack_images (quack_id, image_path, file_type) VALUES (?, ?, ?)");
+                        $imgStmt->execute([$quackId, $dbPath, $mimeType]);
                     }
                 }
             }

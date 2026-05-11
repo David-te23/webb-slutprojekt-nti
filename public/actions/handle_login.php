@@ -14,6 +14,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Kontrollera om användare finns och om lösenordet matchar
         if ($user && password_verify($password, $user['password'])) {
 
+            // Generera ett nytt sessions-ID för att förhindra Session Fixation
+            session_regenerate_id(true);
+
             // Spara info i sessionen
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];

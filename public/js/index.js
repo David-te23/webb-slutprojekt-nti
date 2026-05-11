@@ -5,48 +5,60 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (fileInput) {
         const container = document.getElementById('img-preview-container');
-        const quackForm = fileInput.closest('form'); // Detta orsakar inte längre fel tack vare if(fileInput)
+        const quackForm = fileInput.closest('form'); 
         let allFiles = [];
 
         if (quackForm && container) {
             fileInput.addEventListener('change', function(e) {
                 const newFiles = Array.from(e.target.files);
                 
-                // Max 4 filer
+                // Max 4 filer totalt
                 if (allFiles.length + newFiles.length > 4) {
                     alert("You can upload a maximum of 4 files per quack!");
+                    this.value = ''; // Rensa input
                     return;
                 }
 
                 newFiles.forEach(file => {
                     allFiles.push(file);
 
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const div = document.createElement('div');
-                        div.className = 'position-relative';
-                        div.innerHTML = `
-                            <img src="${event.target.result}" class="rounded shadow-sm preview-img">
-                            <button type="button" class="remove-selected-btn btn-close position-absolute top-0 end-0 bg-white rounded-circle p-1" 
-                                    aria-label="Remove"></button>
-                        `;
+                    // Skapa en temporär URL för preview
+                    const fileUrl = URL.createObjectURL(file);
+                    const isVideo = file.type.startsWith('video/');
 
-                        // Ta bort markerad bild
-                        div.querySelector('button').onclick = () => {
-                            allFiles = allFiles.filter(f => f !== file);
-                            div.remove();
-                        };
-
-                        container.appendChild(div);
+                    const div = document.createElement('div');
+                    div.className = 'position-relative d-inline-block m-1';
+                    
+                    // Skapa media-elementet
+                    let mediaHtml;
+                    if (isVideo) {
+                        // #t=0.1 tvingar fram första bildrutan
+                        mediaHtml = `<video src="${fileUrl}#t=0.1" class="rounded shadow-sm preview-img" muted preload="metadata" style="width: 80px; height: 80px; object-fit: cover;"></video>`;
+                    } else {
+                        mediaHtml = `<img src="${fileUrl}" class="rounded shadow-sm preview-img" style="width: 80px; height: 80px; object-fit: cover;">`;
                     }
-                    reader.readAsDataURL(file);
+
+                    div.innerHTML = `
+                        ${mediaHtml}
+                        <button type="button" class="remove-selected-btn btn-close position-absolute top-0 end-0 bg-white rounded-circle p-1 m-1" 
+                                aria-label="Remove" style="width: 10px; height: 10px;"></button>
+                    `;
+
+                    // Ta bort markerad bild/video
+                    div.querySelector('button').onclick = () => {
+                        URL.revokeObjectURL(fileUrl); // Städa upp minnet
+                        allFiles = allFiles.filter(f => f !== file);
+                        div.remove();
+                    };
+
+                    container.appendChild(div);
                 });
 
-                // Reset input
+                // Reset input så man kan välja samma fil igen om man vill
                 fileInput.value = '';
             });
 
-            // Innan form skickas, bifoga filerna
+            // Innan form skickas, bifoga alla sparade filer
             quackForm.addEventListener('submit', function(e) {
                 if (allFiles.length > 0) {
                     const dataTransfer = new DataTransfer();
@@ -64,15 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
             const filter = this.dataset.filter;
-
-            // Ändra utseende med CSS klass
             tabs.forEach(t => t.classList.remove('active'));
             this.classList.add('active');
-
-            // Enkel laddningseffekt
             feedContainer.style.opacity = '0.5';
 
-            // Hämta den filtrerade feeden
             fetch(`actions/fetch_feed.php?filter=${filter}`)
                 .then(response => {
                     if (!response.ok) throw new Error('Network response was not ok');

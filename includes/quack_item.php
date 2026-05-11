@@ -13,7 +13,7 @@ $display = $isRequack ? [
     'created_at' => $quack['orig_created_at']
 ] : $quack;
 
-// Hantera bilderna
+// Hantera bilderna/videor
 $itemImages = $quack['images'] ?? [];
 if (empty($itemImages) && !isset($quack['images'])) {
     global $dbconn;
@@ -40,17 +40,18 @@ $cardClickAction = !$isSinglePage ? "onclick=\"
         target.closest('svg') || 
         target.closest('.action-icon')
     ) {
-        return; // Om man klickar på siffran eller ikonen, körs bara AJAX-funktionen!
+        return; 
     }
     window.location.href='quack.php?id=" . $quack['id'] . "';
 \"" : "";
-
 ?>
 
 <div class="quack-card bg-white <?= $cardClass ?>" <?= $cardClickAction ?>>
     <?php if($isRequack) : ?>
         <div class="text-muted small mb-2 ms-5 fw-bold">
-            <svg class="quack-icon" fill="#000000" width="16" height="16" viewBox="0 0 20 20" xmlns="w3.org"><path d="M5 4a2 2 0 0 0-2 2v6H0l4 4 4-4H5V6h7l2-2H5zm10 4h-3l4-4 4 4h-3v6a2 2 0 0 1-2 2H6l2-2h7V8z"></path></svg>
+            <svg class="quack-icon" fill="#000000" width="16" height="16" viewBox="0 0 20 20" xmlns="http://w3.org">
+                <path d="M5 4a2 2 0 0 0-2 2v6H0l4 4 4-4H5V6h7l2-2H5zm10 4h-3l4-4 4 4h-3v6a2 2 0 0 1-2 2H6l2-2h7V8z"></path>
+            </svg>
             <a href="profile.php?id=<?= $quack['user_id'] ?>" class="text-muted text-decoration-none hover-underline">
                 <?= htmlspecialchars($quack['display_name']) ?>
             </a> requacked
@@ -60,7 +61,7 @@ $cardClickAction = !$isSinglePage ? "onclick=\"
     <div class="d-flex gap-3 <?= $isSinglePage ? 'mb-3' : '' ?>">
         <!-- Profilbild -->
         <a href="profile.php?id=<?= $display['user_id'] ?>" class="position-relative z-2">
-            <img src="<?= getPfpPath($display['profile_image']) ?>" class="profile-pic-placeholder bg-secondary-subtle">
+            <img src="<?= getPfpPath($display['profile_image']) ?>" class="profile-pic-placeholder bg-secondary-subtle" alt="Profile image">
         </a>
 
         <div class="flex-grow-1">
@@ -109,12 +110,19 @@ $cardClickAction = !$isSinglePage ? "onclick=\"
                              <?= $isSinglePage ? "data-bs-toggle=\"modal\" data-bs-target=\"#imageModal\" data-bs-slide-to=\"$index\"" : "" ?>>
                             <?php 
                             $fileExt = pathinfo($image['image_path'], PATHINFO_EXTENSION);
-                            $isVid = (isset($image['file_type']) && str_contains($image['file_type'], 'video')) || in_array(strtolower($fileExt), ['mp4', 'webm']);
+                            $videoExts = ['mp4', 'webm', 'ogg', 'mov'];
+                            $isVid = in_array(strtolower($fileExt), $videoExts);
                             
                             if ($isVid): ?>
-                                <video src="../<?= htmlspecialchars($image['image_path']) ?>" <?= $isSinglePage ? 'controls' : '' ?> class="rounded w-100"></video>
+                                <!-- Preload metadata och #t=0.1 fixar en preview-bild i flödet -->
+                                <video src="../<?= htmlspecialchars($image['image_path']) ?>#t=0.1" 
+                                       <?= $isSinglePage ? 'controls' : 'muted loop' ?> 
+                                       preload="metadata"
+                                       class="rounded w-100 shadow-sm quack-video-link"
+                                       >
+                                </video>
                             <?php else: ?>
-                                <img src="../<?= htmlspecialchars($image['image_path']) ?>" class="img-fluid rounded">
+                                <img src="../<?= htmlspecialchars($image['image_path']) ?>" class="img-fluid rounded shadow-sm" alt="Quack media">
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
@@ -122,7 +130,7 @@ $cardClickAction = !$isSinglePage ? "onclick=\"
                 <?php endif; ?>
             </div>
 
-            <!-- Fullständigt datum i botten -->
+            <!-- Fullständigt datum i botten (endast på enskild sida) -->
             <?php if ($isSinglePage): ?>
                 <hr>
                 <div class="d-flex justify-content-between text-muted small mb-2">
@@ -130,11 +138,10 @@ $cardClickAction = !$isSinglePage ? "onclick=\"
                 </div>
             <?php endif; ?>
 
-            <!-- Interaktionsikoner -->
+            <!-- Interaktionsikoner (Like, Reply, Requack) -->
             <div>
                 <?php include __DIR__ . '/quack_actions.php'; ?>
             </div>
-
         </div>
     </div>
 </div>

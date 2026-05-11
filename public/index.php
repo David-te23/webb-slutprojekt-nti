@@ -35,7 +35,7 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
     <!-- New Quack container -->
     <div class="create-quack-card bg-white p-3 rounded shadow-sm mb-4">
         <div class="d-flex gap-3">
-            <img src="<?= getPfpPath($currentUser['profile_image']) ?>" class="profile-pic-placeholder">
+            <img src="<?= getPfpPath($currentUser['profile_image']) ?>" class="profile-pic-placeholder" alt="Profile image">
             <form action="actions/process_quack.php" method="POST" enctype="multipart/form-data" class="flex-grow-1">
                 <textarea id="quack-textarea" name="quack_content" rows="1" class="form-control border-0 fs-5 mb-2" placeholder="What is quacking?" required maxlength="280"></textarea>
                 <!-- selected img preview-->
@@ -45,7 +45,7 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
                         <!-- img upload -->
                         <label for="quack-images" class="btn btn-link p-0 text-success new-quack-icon">
                             <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M9 0H2V16H14V5L9 0ZM7 6V8H5V10H7V12H9V10H11V8H9V6H7Z" fill="#000000"></path> </g></svg>
-                            <input type="file" id="quack-images" name="quack_images[]" accept="image/*" class="d-none" multiple>
+                            <input type="file" id="quack-images" name="quack_images[]" accept="image/*,video/*" class="d-none" multiple>
                         </label>
                         <!-- emoji btn -->
                         <button type="button" id="emoji-trigger" class="btn btn-link p-0 text-success new-quack-icon">

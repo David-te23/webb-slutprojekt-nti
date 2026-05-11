@@ -120,7 +120,7 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
     <section class="profile-header-card mb-4">
         <div class="d-flex justify-content-between align-items-start">
             <div class="d-flex align-items-center gap-4">
-                <img src="<?= getPfpPath($user['profile_image'] ?? 'default_pfp.jpg') ?>" alt="Profile" class="profile-main-img">
+                <img src="<?= getPfpPath($user['profile_image'] ?? 'default_pfp.jpg') ?>" alt="Profile image" class="profile-main-img">
                 <div class="text-white text-content">
                     <h2 class="fw-bold mb-0"><?= htmlspecialchars($user['display_name']) ?></h2>
                     <p class="text-white-50">@<?= htmlspecialchars($user['username']) ?></p>
@@ -179,7 +179,7 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
                 <div class="modal-body">
                     <div class="profile-edit-image-container text-center mb-4">
                         <div class="position-relative d-inline-block image-hover-container">
-                            <img src="<?= getPfpPath($user['profile_image'] ?? 'default_pfp.jpg') ?>" class="profile-main-img border-secondary shadow" id="previewImg">
+                            <img src="<?= getPfpPath($user['profile_image'] ?? 'default_pfp.jpg') ?>" class="profile-main-img border-secondary shadow" id="previewImg" alt="Preview profile image">
                             <label for="pfpInput" class="camera-overlay">
                                 <svg xmlns="http://w3.org" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -198,6 +198,14 @@ require_once __DIR__ . '/../includes/quack_time_formatter.php';
                     <div class="form-floating mb-4">
                         <textarea name="bio" class="form-control" id="editBio" placeholder="Bio" style="height: 100px"><?= htmlspecialchars($user['bio'] ?? '') ?></textarea>
                         <label for="editBio">Bio</label>
+                    </div>
+
+                    <div class="security-zone p-3 border border-secondary rounded-3 text-center mt-3 mb-3">
+                        <h6 class="text-white fw-bold small uppercase mb-2">Security</h6>
+                        <p class="sx-small mb-3 text-white-50">Need to update your login credentials?</p>
+                        <a href="forgot_password.php" class="btn btn-outline-light btn-sm rounded-pill w-100 fw-bold">
+                            Reset Password via Email
+                        </a>
                     </div>
 
                     <div class="danger-zone p-3 border border-danger rounded-3 text-center mt-3">

@@ -79,7 +79,7 @@ if ($query !== '') {
             <div class="bg-white rounded shadow-sm overflow-hidden">
                 <?php foreach ($users as $user): ?>
                     <a href="profile.php?id=<?= $user['id'] ?>" class="d-flex align-items-center p-3 text-decoration-none text-dark border-bottom user-search-item">
-                        <img src="<?= getPfpPath($user['profile_image']) ?>" class="profile-pic-placeholder me-3" style="width:50px; height:50px; object-fit:cover;">
+                        <img src="<?= getPfpPath($user['profile_image']) ?>" class="profile-pic-placeholder me-3" alt="Profile image">
                         <div>
                             <div class="fw-bold"><?= htmlspecialchars($user['display_name']) ?></div>
                             <div class="text-muted small">@<?= htmlspecialchars($user['username']) ?></div>

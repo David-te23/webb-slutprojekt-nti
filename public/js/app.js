@@ -58,21 +58,50 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
- // --- BILD-MODAL & KARUSELL ---
+// --- DYNAMISK BILD & VIDEO MODAL ---
 document.addEventListener('DOMContentLoaded', function() {
     const imageModal = document.getElementById('imageModal');
+    if (!imageModal) return;
+
+    const carouselInner = imageModal.querySelector('.carousel-inner');
     const quackCarouselElement = document.getElementById('quackCarousel');
 
-    if (imageModal && quackCarouselElement) {
-        const carousel = new bootstrap.Carousel(quackCarouselElement);
-        document.querySelectorAll('[data-bs-target="#imageModal"]').forEach(item => {
-            item.addEventListener('click', function() {
-                const slideTo = parseInt(this.getAttribute('data-bs-slide-to'));
-                carousel.to(slideTo);
-            });
+    imageModal.addEventListener('show.bs.modal', function (event) {
+        const trigger = event.relatedTarget; // Elementet man klickade på
+        const quackCard = trigger.closest('.quack-card');
+        const allMedia = quackCard.querySelectorAll('.gallery-item img, .gallery-item video');
+        const startSlide = parseInt(trigger.getAttribute('data-bs-slide-to'));
+
+        // Töm karusellen och bygg upp den på nytt
+        carouselInner.innerHTML = '';
+
+        allMedia.forEach((media, index) => {
+            const isActive = index === startSlide;
+            const isVideo = media.tagName === 'VIDEO';
+            
+            const carouselItem = document.createElement('div');
+            carouselItem.className = `carousel-item ${isActive ? 'active' : ''}`;
+            
+            if (isVideo) {
+                // Skapa video för modalen (med kontroller)
+                carouselItem.innerHTML = `
+                    <video src="${media.src}" controls class="d-block w-100 rounded" style="max-height: 80vh;"></video>
+                `;
+            } else {
+                // Skapa bild för modalen
+                carouselItem.innerHTML = `
+                    <img src="${media.src}" class="d-block w-100 rounded" style="max-height: 80vh; object-fit: contain;" alt="Quack media">
+                `;
+            }
+            carouselInner.appendChild(carouselItem);
         });
-    }
+
+        // Initiera karusellen på rätt slide
+        const carousel = new bootstrap.Carousel(quackCarouselElement);
+        carousel.to(startSlide);
+    });
 });
+
 
 
 // --- LIKE-HANTERARE --- 
@@ -135,6 +164,90 @@ document.addEventListener('click', function(e) {
                     rBtn.classList.toggle('is-requacked', data.status === 'added');
                 });
             }
+        }
+    });
+});
+
+
+// --- KOMMENTAR-HANTERARE (AJAX) ---
+document.addEventListener('submit', function(e) {
+    // Kollar om formuläret som skickas är kommentarsformuläret
+    const form = e.target.closest('#commentForm');
+    if (!form) return;
+
+    e.preventDefault(); // Stoppa sidladdning
+    
+    const formData = new FormData(form);
+    const textarea = form.querySelector('textarea');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    if (submitBtn) submitBtn.disabled = true;
+
+    fetch('actions/process_comment.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            if (textarea) textarea.value = '';
+            // Använd replace för att ladda om utan att förstöra webbläsarens historik
+            window.location.replace(window.location.href);
+        } else {
+            alert("Something went wrong.");
+            if (submitBtn) submitBtn.disabled = false;
+        }
+    })
+    .catch(err => {
+        console.error('Comment error:', err);
+        if (submitBtn) submitBtn.disabled = false;
+    });
+});
+
+
+// --- Ta bort kommentar AJAX ---
+let commentIdToDelete = null;
+let commentElementToRemove = null;
+
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.delete-comment-btn');
+    if (!btn) return;
+
+    // Spara info
+    commentIdToDelete = btn.dataset.commentId;
+    commentElementToRemove = btn.closest('.comment-card');
+
+    // Öppna modalen (Bootstrap 5 sätt)
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteCommentModal'));
+    deleteModal.show();
+});
+
+// Hantera själva raderingen när man trycker på "Delete" i modalen
+document.getElementById('confirmDeleteCommentBtn')?.addEventListener('click', function() {
+    if (!commentIdToDelete || !commentElementToRemove) return;
+
+    const formData = new FormData();
+    formData.append('comment_id', commentIdToDelete);
+
+    fetch('actions/delete_comment.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // Stäng modalen
+            bootstrap.Modal.getInstance(document.getElementById('deleteCommentModal')).hide();
+            
+            // Animera bort kommentaren
+            commentElementToRemove.style.opacity = '0';
+            commentElementToRemove.style.transform = 'scale(0.95)';
+            commentElementToRemove.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                commentElementToRemove.remove();
+                commentIdToDelete = null;
+                commentElementToRemove = null;
+            }, 300);
         }
     });
 });
@@ -212,8 +325,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// --- INFO-TABS HANTERARE (footer länkar) --- 
+document.addEventListener('DOMContentLoaded', function() {
+    // Hämta 'tab' från URL:en (t.ex. ?tab=privacy)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabName = urlParams.get('tab');
 
-
+    if (tabName) {
+        // Hitta knappen som hör till den fliken
+        const targetTab = document.querySelector('#' + tabName + '-tab');
+        
+        if (targetTab) {
+            // Använd Bootstraps inbyggda funktion för att visa fliken
+            const tabTrigger = new bootstrap.Tab(targetTab);
+            tabTrigger.show();
+        }
+    }
+});
 
 
  // --- EMOJI-PICKERS ---

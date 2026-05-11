@@ -9,6 +9,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
+    // Kontrollera att alla fält är ifyllda (utöver HTML-valideringen)
+    if (empty($username) || empty($email) || empty($password)) {
+        $_SESSION['reg_error'] = "All fields are required.";
+        header("Location: ../register.php");
+        exit;
+    }
+
+    // Kontrollera lösenordets längd (minst 8 tecken)
+    if (strlen($password) < 8) {
+        $_SESSION['reg_error'] = "Password must be at least 8 characters long.";
+        header("Location: ../register.php");
+        exit;
+    }
+
     // Kontrollera om lösenorden matchar
     if ($password !== $confirm_password) {
         $_SESSION['reg_error'] = "Passwords do not match.";
@@ -37,6 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
 
     } catch (PDOException $e) {
+        // Code 23000 betyder "Integrity constraint violation" (oftast UNIQUE-krock)
         if ($e->getCode() == 23000) {
             $_SESSION['reg_error'] = "Username or email already exists.";
         } else {
@@ -45,5 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         header("Location: ../register.php");
         exit;
     }   
+} else {
+    header("Location: ../register.php");
+    exit;
 }
-?>
