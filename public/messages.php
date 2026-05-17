@@ -20,6 +20,8 @@ if ($contactId) {
 ?>
 
 <div class="messages-layout border rounded shadow-sm bg-white overflow-hidden">
+<h1 class="visually-hidden">Private Messages</h1>
+
     <!-- VÄNSTER: LISTA (Döljs på mobil om en chatt är aktiv) -->
     <div class="conversation-sidebar border-end flex-column <?= $contactId ? 'd-none d-md-flex' : 'd-flex' ?>">
         <div class="p-3 border-bottom bg-white text-center">
@@ -90,12 +92,12 @@ if ($contactId) {
     </div>
 </div>
 
-<!-- MODAL: SÖK ANVÄNDARE (Oförändrad) -->
-<div class="modal fade" id="newChatModal" tabindex="-1" aria-labelledby="newChatModalLabel" aria-hidden="true">
+<!-- MODAL: SÖK ANVÄNDARE -->
+<div class="modal fade" id="newChatModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="newChatModalLabel">New Message</h5>
+                <h2 class="h5 modal-title fw-bold" id="newChatModalLabel">New Message</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -128,7 +130,8 @@ if ($contactId) {
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content bg-transparent border-0">
             <div class="modal-body p-0 text-center position-relative">
-                <img src="" id="modalImage" class="img-fluid rounded shadow-lg modal-img" alt="Fullscreen image">
+                <!-- temporär img src, liten genomskinlig base64 bild som dynamiskt ändras med js till riktiga bilden-->
+                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" id="modalImage" class="img-fluid rounded shadow-lg modal-img" alt="Fullscreen image">
                 <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
             </div>
         </div>

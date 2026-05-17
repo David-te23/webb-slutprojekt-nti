@@ -29,7 +29,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">Delete Quack?</h5>
+                <div class="h5 modal-title fw-bold">Delete Quack?</div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-muted">

@@ -12,12 +12,14 @@ $actTargetId = $quack['parent_id'] ?? $quack['id'];
     <div class="d-flex gap-3 gap-md-5">
                             
         <!-- kommentar -->
-        <span class="action-icon d-flex align-items-center gap-1">
+        <!-- kommentar (Ändrad href till att använda ./ så att den behåller den aktuella mappen i URL:en) -->
+        <a href="./quack.php?id=<?= $quack['id'] ?>" class="action-icon d-flex align-items-center gap-1 text-decoration-none text-muted">
             <svg class="quack-icon" width="20" height="20" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                 <path d="M388.667,257 L367.333,257 C364.388,257 362,259.371 362,262.297 L362,279.187 C362,282.111 364.055,284 367,284 L373.639,284 L378,289.001 L382.361,284 L389,284 C391.945,284 394,282.111 394,279.187 L394,262.297 C394,259.371 391.612,257 388.667,257" transform="translate(-362, -257)"></path>
             </svg>
             <span class="align-middle"><?= $quack['comment_count'] ?? 0 ?></span>
-        </span>
+        </a>
+
 
         <!-- requack -->
         <span class="action-icon requack-btn <?= ($quack['user_requacked'] ?? false) ? 'is-requacked' : '' ?>" data-quack-id="<?= $actTargetId ?>">

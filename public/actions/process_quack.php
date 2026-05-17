@@ -50,31 +50,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
         }
         // --- NOTIS-LOGIK SLUT ---
 
-        // --- BILD/VIDEO-LOGIK ---
+        // --- BILD/VIDEO-LOGIK --
+         // SÄKER FILUPPLADDNING: Kontrollerar om filer har skickats med i formuläret-
         if (!empty($_FILES['quack_images']['name'][0])) {
             $uploadDir = __DIR__ . '/../../uploads/quacks/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true); // Skapar mappen automatiskt om den saknas
 
+            // Strikt vitlista över tillåtna filformat (MIME-types) samt storleksgräns (10MB)
             $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
             $maxFileSize = 10 * 1024 * 1024; 
 
+            // Loopar igenom alla filer (stödjer flera bilder/videor i samma inlägg)
             foreach ($_FILES['quack_images']['tmp_name'] as $key => $tmpName) {
                 if ($_FILES['quack_images']['error'][$key] === UPLOAD_ERR_OK) {
                     if ($_FILES['quack_images']['size'][$key] > $maxFileSize) continue;
 
+                    // SÄKERHET: Läser av filens faktiska binära head-innehåll istället för att lita på 
+                    // filändelsen (.jpg)
                     $finfo = finfo_open(FILEINFO_MIME_TYPE);
                     $mimeType = finfo_file($finfo, $tmpName);
                     finfo_close($finfo);
 
                     if (!in_array($mimeType, $allowedMimeTypes)) continue;
 
+                     // Genererar ett helt slumpmässigt, kryptografiskt säkert filnamn för att 
+                    // förhindra filnamnskrockar och dölja originalnamnet på servern.
                     $extension = pathinfo($_FILES['quack_images']['name'][$key], PATHINFO_EXTENSION);
                     $fileName = bin2hex(random_bytes(16)) . '.' . $extension;
                     $targetPath = $uploadDir . $fileName;
 
+                     // Flyttar filen från serverns temporära minne till den permanenta uploads-mappen
                     if (move_uploaded_file($tmpName, $targetPath)) {
                         $dbPath = 'uploads/quacks/' . $fileName;
                         
+                        // Sparar filsökvägen och dess validerade MIME-typ i databasen
                         $imgStmt = $dbconn->prepare("INSERT INTO quack_images (quack_id, image_path, file_type) VALUES (?, ?, ?)");
                         $imgStmt->execute([$quackId, $dbPath, $mimeType]);
                     }

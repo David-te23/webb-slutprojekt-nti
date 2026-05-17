@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
         $delete = $dbconn->prepare("DELETE FROM quacks WHERE id = ?");
         $delete->execute([$existing['id']]);
         
-        // Ta bort tillhörande notis
+        // Städar bort den gamla aviseringen från originalägarens aviseringsflöde
         $dbconn->prepare("DELETE FROM notifications WHERE source_user_id = ? AND source_id = ? AND type = 'requack'")
                ->execute([$userId, $quackId]);
                
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
         $stmtOwner->execute([$quackId]);
         $originalOwnerId = $stmtOwner->fetchColumn();
 
-        // Skapa notis om det inte är man själv
+        // Skapa notis i databasen endast om man inte råkar dela sitt eget inlägg
         if ($originalOwnerId && $originalOwnerId != $userId) {
             $dbconn->prepare("INSERT INTO notifications (user_id, source_user_id, type, source_id, is_read) VALUES (?, ?, 'requack', ?, 0)")
                    ->execute([$originalOwnerId, $userId, $quackId]);
@@ -43,6 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
         // --- NOTIS-LOGIK SLUT ---
     }
 
+     // STATISTIK: Räknar ut det nya, uppdaterade antalet delningar för detta inlägg.
+    // Värdet returneras till frontenden (AJAX) så att gränssnittet uppdateras live på skärmen direkt.
     $countStmt = $dbconn->prepare("SELECT COUNT(*) FROM quacks WHERE parent_id = ? AND content IS NULL");
     $countStmt->execute([$quackId]);
     $newCount = $countStmt->fetchColumn();

@@ -35,8 +35,10 @@ if (!empty($notifications)) {
 
 <!-- Notifications-vy börjar här -->
 <div class="notifications-container shadow-sm rounded mt-2">
+<h1 class="visually-hidden">Your Notifications</h1>
+
     <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
-        <h4 class="mb-0 fw-bold">Notifications</h4>
+        <h2 class="h4 mb-0 fw-bold">Notifications</h2>
         <span class="badge bg-secondary">Latest activity</span>
     </div>
 
@@ -58,7 +60,7 @@ if (!empty($notifications)) {
                    class="list-group-item list-group-item-action d-flex align-items-start py-3 <?= $isUnread ? 'bg-unread' : '' ?>">
                     
                     <div class="me-3">
-                        <img src="<?= getPfpPath($notification['profile_image']) ?>" alt="Profile image" 
+                        <img src="<?= getPfpPath($notification['profile_image']) ?>"
                              alt="Profile" 
                              class="rounded-circle shadow-sm notification-img">
                     </div>

@@ -57,11 +57,13 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 
 
 <div class="container mt-4">
+<h1 class="visually-hidden">Quack by <?= htmlspecialchars($quack['display_name']) ?></h1>
+
     <div class="row justify-content-center">
         <div class="col-12 custom-sidebar-card p-3">
            <!-- Tillbaka-knapp -->
             <button onclick="history.back()" class="btn btn-link text-black bg-white text-decoration-none mb-3 d-flex align-items-center gap-2 fw-bold shadow-sm rounded-pill px-3">
-                <svg xmlns="http://w3.org" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
                 </svg>
                 Back
@@ -72,7 +74,7 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 
                 <!-- Kommentarssektion -->
                 <div class="comment-section mt-4">
-                    <h5 class="text-black mb-3">Replies</h5>
+                    <h2 class="h5 text-black mb-3">Replies</h2>
                     
                     <!-- Formulär för att svara -->
                     <div class="bg-white p-3 rounded-4 shadow-sm mb-4">
@@ -124,7 +126,7 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="comment-card bg-white p-3 mb-2 rounded-4 shadow-sm border-start border-quack border-4">
                                     <div class="d-flex gap-3">
                                         <a href="profile.php?id=<?= $comment['user_id'] ?>">
-                                            <img src="<?= getPfpPath($comment['profile_image']) ?>" alt="Profilbild"
+                                            <img src="<?= getPfpPath($comment['profile_image']) ?>" alt="Profile image"
                                                 width="40" height="40" class="rounded-circle">
                                         </a>
                                         <div class="flex-grow-1">
@@ -143,7 +145,7 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                                                                 data-comment-id="<?= $comment['id'] ?>" 
                                                                 title="Delete comment"
                                                                 style="line-height: 0;">
-                                                            <svg xmlns="http://w3.org" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
                                                                 <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
                                                             </svg>
@@ -159,11 +161,9 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
                         <?php endif; ?>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
-</div>
 
 <!-- Modal för bildgalleri -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
@@ -200,7 +200,7 @@ $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-0 shadow-lg rounded-4 bg-dark text-white">
             <div class="modal-body text-center p-4">
-                <h5 class="fw-bold mb-3">Delete Comment?</h5>
+                <h3 class="fw-bold mb-3">Delete Comment?</h3>
                 <p class="text-white-50 small mb-4">This action cannot be undone.</p>
                 <div class="d-grid gap-2">
                     <button type="button" id="confirmDeleteCommentBtn" class="btn btn-danger rounded-pill fw-bold">Delete</button>

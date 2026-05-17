@@ -18,25 +18,26 @@ try {
         $dbconn->prepare("INSERT IGNORE INTO follows (follower_id, following_id) VALUES (?, ?)")
                ->execute([$follower_id, $following_id]);
         
-        // Skapa notis
+        // Skapa notis, vid en följning finns inget Quack-ID att länka till. 
+        // Därför sätts 'source_id' till den som följer ($follower_id) så att systemet vet vem som triggade notisen.
         $dbconn->prepare("INSERT INTO notifications (user_id, source_user_id, type, source_id, is_read) VALUES (?, ?, 'follow', ?, 0)")
                ->execute([$following_id, $follower_id, $follower_id]);
     } else {
-        // Ta bort följning
+        // Ta bort följning ur databasen
         $dbconn->prepare("DELETE FROM follows WHERE follower_id = ? AND following_id = ?")
                ->execute([$follower_id, $following_id]);
                
-        // Ta bort notis
+         // Städar bort notisen från målanvändarens flöde om man ångrar sin följning
         $dbconn->prepare("DELETE FROM notifications WHERE user_id = ? AND source_user_id = ? AND type = 'follow'")
                ->execute([$following_id, $follower_id]);
     }
 
-    // 1. Räkna den andras följare (Target Followers)
+    // Räkna den andras följare (Target Followers)
     $stmt1 = $dbconn->prepare("SELECT COUNT(*) FROM follows WHERE following_id = ?");
     $stmt1->execute([$following_id]);
     $targetFollowers = (int)$stmt1->fetchColumn();
 
-    // 2. Räkna hur många DU följer (Din Following-siffra)
+    // Räkna hur många DU följer totalt (Din Following-siffra)
     $stmt2 = $dbconn->prepare("SELECT COUNT(*) FROM follows WHERE follower_id = ?");
     $stmt2->execute([$follower_id]);
     $myFollowing = (int)$stmt2->fetchColumn();

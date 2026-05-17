@@ -142,7 +142,7 @@ if (isset($_SESSION['user_id'])) {
             <script src="js/profile_edit.js" defer></script>
         <?php endif; ?>
         
-        <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+        <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
     <?php endif; ?>
 </head>
 
@@ -155,7 +155,7 @@ if (isset($_SESSION['user_id'])) {
             <?php require __DIR__ . '/nav.php'; ?>
             
             <button class="btn text-white d-lg-none ms-2 p-0" id="mobileSearchBtn" type="button">
-                <svg xmlns="http://w3.org" width="24" height="24" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                 </svg>
             </button>
@@ -180,7 +180,7 @@ if (isset($_SESSION['user_id'])) {
                 <div class="position-relative search-input-wrapper">
                     <!-- Sök-ikon -->
                     <span class="search-icon-inside">
-                        <svg xmlns="http://w3.org" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                         </svg>
                     </span>
@@ -189,9 +189,15 @@ if (isset($_SESSION['user_id'])) {
                 </div>
             </form>
 
-            <a href="profile.php?id=<?= $currentUser['id'] ?>" class="profile-button p-0 m-0">
+
+            <?php if (isset($_SESSION['user_id']) && isset($currentUser['id'])): ?>
+                <a href="profile.php?id=<?= $currentUser['id'] ?>" class="profile-button p-0 m-0">
                 <img src="<?= getPfpPath($currentUser['profile_image'] ?? 'default_pfp.jpg') ?>" alt="Profile" class="header-img">
             </a>
+            <?php else: ?>
+                <!-- Visas om användaren är utloggad (t.ex. på login.php) -->
+                <a href="login.php" class="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold">Log in</a>
+            <?php endif; ?>
         </div>
     </div>
 </header>

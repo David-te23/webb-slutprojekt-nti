@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('chat-input-field');
     const fileInput = document.getElementById('chat-image-input');
     const previewContainer = document.getElementById('chat-img-preview');
+
+    // CACHELOGIK: Sparar förra polling-svarets HTML för att undvika onödiga omritningar
+    // om inga nya meddelanden tagits emot
     let lastHTML = ""; 
     let lastConvHTML = "";
 
@@ -13,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupEmojiPicker('chat-emoji-trigger', 'chat-picker-container', 'chat-input-field', 'chat-emoji-picker');
     }
 
-    // Förbättrad scroll-funktion med en kort timeout för att säkerställa att DOM:en är redo
+    // Scroll-funktion med en kort timeout för att säkerställa att DOM:en är redo
     const scrollToBottom = (behavior = 'auto') => {
         if (chatHistory) {
             setTimeout(() => {
@@ -34,6 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const reader = new FileReader();
                 const isVideo = file.type.startsWith('video/');
 
+                // Skapar en lokal Base64-URL så användaren kan se bilden/videon direkt
+                // innan den ens laddats upp till webbservern
                 reader.onload = function(event) {
                     const div = document.createElement('div');
                     div.className = 'position-relative d-inline-block mt-2 mb-2';
@@ -48,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 aria-label="Remove"></button>
                     `;
 
+                    // Gör det möjligt för användaren att ångra och rensa den valda filen
                     div.querySelector('button').onclick = () => {
                         fileInput.value = ''; 
                         div.remove();
@@ -62,10 +68,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- AJAX (SKICKA MEDDELANDE) ---
     if (messageForm) {
         messageForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+            e.preventDefault(); // Stoppar traditionell formulärinsändning
             if (!messageInput.value.trim() && (!fileInput.files || !fileInput.files[0])) return;
 
             const formData = new FormData(messageForm);
+
+            // Skickar data asynkront (AJAX) till backend via Fetch API
             fetch(messageForm.getAttribute('action'), {
                 method: 'POST',
                 body: formData,
@@ -74,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                     // Återställer inmatningsfälten vid lyckat svar
                     messageInput.value = '';
                     fileInput.value = '';
                     previewContainer.innerHTML = '';
@@ -94,6 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(`actions/get_conversations.php?user_id=${userId}`)
             .then(response => response.text())
             .then(html => {
+                // Skriv bara ut om HTML-strukturen faktiskt har ändrats (sparar prestanda)
                 if (html !== lastConvHTML) {
                     conversationList.innerHTML = html;
                     lastConvHTML = html;
@@ -113,14 +123,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.text())
             .then(html => {
                 if (html !== lastHTML) {
-                    // Kolla om användaren redan är i botten (inom 100px marginal)
+                    // SMART SCROLL-SPÄRR: Kollar om användaren står högst upp och läser gamla meddelanden.
+                    // Om användaren INTE är i botten (100px marginal), tvingar vi inte ner vyn så att läsningen störs.
                     const isAtBottom = chatHistory.scrollTop + chatHistory.clientHeight >= chatHistory.scrollHeight - 100;
                     const firstLoad = lastHTML === "";
 
                     chatHistory.innerHTML = html;
                     lastHTML = html;
 
-                    // Scrolla ner om: det är första laddningen, vi tvingas till det, eller om man redan var i botten
+                    // Automatisk scroll sker endast vid första laddningen, eget skickat meddelande, eller om man redan var i botten
                     if (firstLoad || forceScroll || isAtBottom) {
                         scrollToBottom(firstLoad ? 'auto' : 'smooth');
                     }
@@ -132,6 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Starta polling-loopen
+     // som hämtar nya chattmeddelanden var 3:e sekund, och inkorgen var 5:e sekund.
     if (window.location.search.includes('user_id=')) {
         refreshMessages(true); // Initial laddning med tvingad scroll
         setInterval(() => refreshMessages(false), 3000);
@@ -155,6 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const items = Array.from(userList.getElementsByClassName('user-search-item'));
         searchInput.addEventListener('input', () => {
             const filter = searchInput.value.toLowerCase();
+            // Växlar Bootstrap-klasser dynamiskt istället för DOM-raderingar
             items.forEach(item => {
                 const isVisible = item.textContent.toLowerCase().includes(filter);
                 item.classList.toggle('d-none', !isVisible);
@@ -166,11 +179,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- BILDVISNING MODAL ---
     if (chatHistory) {
         chatHistory.addEventListener('click', function(e) {
+            // Fångar upp klick på skickade bilder via Event Delegation
             if (e.target.classList.contains('chat-img-msg')) {
                 const imgSrc = e.target.getAttribute('src');
                 const modalImg = document.getElementById('modalImage');
                 if (modalImg) {
-                    modalImg.src = imgSrc;
+                    modalImg.src = imgSrc; // Flyttar över bildkällan till den tomma placeholder-bilden i modalen
                     const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
                     imageModal.show();
                 }

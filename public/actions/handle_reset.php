@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newPassword = $_POST['password'];
     $confirmPassword = $_POST['confirm_password'];
 
-    // Kontrollera längd
+    // Kontrollera lösenordets längd
     if (strlen($newPassword) < 8) {
         $_SESSION['login_error'] = "Password must be at least 8 characters.";
         header("Location: ../reset_password.php?token=" . urlencode($token));

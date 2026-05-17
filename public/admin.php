@@ -66,10 +66,12 @@ $quacks = $quackStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="admin-container shadow-sm">
+<h1 class="visually-hidden">Admin Control Panel</h1>
+
     <div class="admin-header d-flex justify-content-between align-items-center">
-        <h4 class="fw-bold m-0">
+        <h2 class="h4 fw-bold m-0">
             <?= $viewUserId ? 'Managing Quacks: @' . htmlspecialchars($managedUser['username']) : 'Admin Panel' ?>
-        </h4>
+        </h2>
         <?php if ($viewUserId): ?>
             <a href="admin.php" class="btn btn-sm btn-light rounded-pill px-3 fw-bold">Back to Users</a>
         <?php else: ?>
@@ -156,7 +158,7 @@ $quacks = $quackStmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">Delete User?</h5>
+                <h3 class="h5 modal-title fw-bold">Delete User?</h3>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-muted">

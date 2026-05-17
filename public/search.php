@@ -22,7 +22,7 @@ if ($query !== '') {
     $users = $userStmt->fetchAll(PDO::FETCH_ASSOC);
 
     // --- SÖK EFTER QUACKS ---
-    // Bas-SQL som innehåller allt din quack_loop.php behöver (likes, counts, etc)
+    // Bas-SQL som innehåller allt quack_loop.php behöver (likes, counts, etc)
     $sql = "SELECT q.*, u.username, u.display_name, u.profile_image,
             (SELECT COUNT(*) FROM likes WHERE quack_id = q.id) as like_count,
             (SELECT COUNT(*) FROM comments WHERE quack_id = q.id) as comment_count,
@@ -61,21 +61,23 @@ if ($query !== '') {
 }
 ?>
 
-<!-- Återanvänder din feed-container för den grå bakgrunden -->
+<!-- Återanvänder feed-container för den grå bakgrunden -->
 <div class="p-3 rounded shadow-sm feed-container">
+<h1 class="visually-hidden">Quacker - Search results</h1>
+
     
     <!-- Sök-header (Vitt kort) -->
     <div class="bg-white p-3 rounded shadow-sm mb-4">
-        <h4 class="m-0 fw-bold">
+        <h2 class="h4 m-0 fw-bold">
             Results for <span class="text-success"><?= htmlspecialchars($query) ?></span>
-        </h4>
+        </h2>
         <small class="text-muted"><?= count($users) ?> users and <?= count($quacks) ?> quacks found</small>
     </div>
 
     <!-- ANVÄNDARLISTA -->
     <?php if (!empty($users)): ?>
         <div class="users-section mb-4">
-            <h6 class="text-muted fw-bold ps-2 mb-2">Users</h6>
+            <h3 class="h6 text-muted fw-bold ps-2 mb-2">Users</h3>
             <div class="bg-white rounded shadow-sm overflow-hidden">
                 <?php foreach ($users as $user): ?>
                     <a href="profile.php?id=<?= $user['id'] ?>" class="d-flex align-items-center p-3 text-decoration-none text-dark border-bottom user-search-item">
@@ -95,7 +97,7 @@ if ($query !== '') {
 
     <!-- QUACKS LISTA -->
     <div id="feed-container">
-        <h6 class="text-muted fw-bold ps-2 mb-2">Quacks</h6>
+        <h4 class="h6 text-muted fw-bold ps-2 mb-2">Quacks</h4>
         <?php 
         require_once __DIR__ . '/../includes/quack_loop.php'; 
         ?>

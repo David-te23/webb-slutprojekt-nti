@@ -4,8 +4,10 @@ require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container mt-5">
+<h1 class="visually-hidden">Quacker - Information</h1>
+
     <div class="row justify-content-center">
-        <div class="col-lg-8 custom-sidebar-card p-4 shadow-sm">
+        <div class="col-lg-8 custom-sidebar-card p-4 shadow-sm bg-light">
             <h2 class="fw-bold mb-4 text-dark">Information</h2>
 
             <!-- Tab-navigering -->
@@ -25,7 +27,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="tab-content text-dark" id="infoTabsContent">
                 <!-- About Us -->
                 <div class="tab-pane fade show active" id="about" role="tabpanel">
-                    <h4>Welcome to Quacker</h4>
+                    <h3 class="h4">Welcome to Quacker</h3>
                     <p>Quacker is a social media platform created to simulate real-world web applications. Our mission is to provide a safe and fast environment for users to share their thoughts and connect with others.</p>
                     <p class="text-muted small mt-4">
                         This platform was developed by David Norberg as a final project for 
@@ -36,13 +38,13 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <!-- Terms -->
                 <div class="tab-pane fade" id="terms" role="tabpanel">
-                    <h4>Terms of Service</h4>
+                    <h3 class="h4">Terms of Service</h3>
                     <p>By using Quacker, you agree to be nice to other ducks. No hate speech or "bad quacking" is allowed.</p>
                 </div>
 
                 <!-- Privacy & GDPR (Viktigt för A-betyget!) -->
                 <div class="tab-pane fade" id="privacy" role="tabpanel">
-                <h4>Privacy Policy & GDPR</h4>
+                <h3 class="h4">Privacy Policy & GDPR</h3>
                     <p>We take your privacy seriously. To comply with GDPR regulations, we provide the following information:</p>
                     <ul>
                         <li><strong>Data Storage:</strong> We store information you provide, including your email, username, display name, profile biography, and profile images.</li>

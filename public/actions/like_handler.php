@@ -19,7 +19,7 @@ if ($already_liked) {
     // Unlike: Ta bort like
     $dbconn->prepare("DELETE FROM likes WHERE user_id = ? AND quack_id = ?")->execute([$user_id, $quack_id]);
     
-    // Valfritt: Ta bort notisen också om användaren ångrar sin like direkt
+    // Ta bort notisen också om användaren ångrar sin like direkt
     $dbconn->prepare("DELETE FROM notifications WHERE source_user_id = ? AND source_id = ? AND type = 'like'")
            ->execute([$user_id, $quack_id]);
            

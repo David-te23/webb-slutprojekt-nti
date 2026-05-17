@@ -18,13 +18,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LIVE SÖKFUNKTION ---
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
+            // Gör söksträngen till små bokstäver och rensar tomrum för att göra sökningen flexibel
             const term = e.target.value.toLowerCase().trim();
             let hasResults = false;
 
             userCards.forEach(card => {
+                 // Läser av användardata som sparats i HTML5 data-attribut på varje kort
                 const username = card.dataset.username || "";
                 const displayName = card.dataset.displayname || "";
 
+                // Gömmer (.d-none) eller visar kortet baserat på om namnet matchar sökningen
                 if (username.includes(term) || displayName.includes(term)) {
                     card.classList.remove('d-none');
                     hasResults = true;
@@ -77,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Stäng modal
                     if (bsDeleteUserModal) bsDeleteUserModal.hide();
 
-                    // Animera bort kortet
+                    // Animera bort kortet med CSS-transitions istället för att sidan blinkar till eller laddas om
                     if (userCardToRemove) {
                         userCardToRemove.style.opacity = '0';
                         userCardToRemove.style.transform = 'scale(0.9)';
@@ -87,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             userCardToRemove.remove();
                             userIdToDelete = null;
                             userCardToRemove = null;
-                        }, 300);
+                        }, 300); // Matchar transition-tiden på 0.3 sekunder
                     }
                 } else {
                     alert('Error: ' + (data.error || 'Could not delete user'));

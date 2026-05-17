@@ -18,6 +18,7 @@ if ($token) {
 ?>
 
 <div class="login-page-wrapper">
+<h1 class="visually-hidden">Quacker - Reset password</h1>
     <div class="container d-flex justify-content-center align-items-center min-vh-70">
         <div class="login-card shadow-sm border-0 p-5">
             

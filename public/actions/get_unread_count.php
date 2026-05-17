@@ -23,5 +23,7 @@ if (isset($_SESSION['user_id'])) {
     $response['unread_messages'] = (int)$stmtMsg->fetchColumn();
 }
 
+// API-SVAR (JSON): Detta skript anropas asynkront (polling via JavaScript) var 5:e sekund.
+// JSON-datan returneras till frontenden för att dynamiskt rita ut röda siffer-badgar i menyraden.
 echo json_encode($response);
 exit;

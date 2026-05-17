@@ -1,8 +1,10 @@
 <?php
+// Kontrollerar om inlägget är en delning (requack) genom att se om text saknas och parent-id finns
 $isRequack = ($quack['content'] === null && $quack['parent_id'] !== null);
 $targetId = $isRequack ? $quack['parent_id'] : $quack['id'];
 
-// Mappa upp display-datan
+// DATAMAPPNING: Om det är en requack mappar vi om display-datan så att det är ORIGINALETS text, 
+// namn och profilbild som visas i kortet istället för den som delade den
 $display = $isRequack ? [
     'id' => $quack['parent_id'],
     'user_id' => $quack['orig_user_id'],
@@ -13,7 +15,8 @@ $display = $isRequack ? [
     'created_at' => $quack['orig_created_at']
 ] : $quack;
 
-// Hantera bilderna/videor
+// Om bilderna inte skickades med från flödet (t.ex. vid direktvisning)
+// görs en extra databasfråga här för att hämta tillhörande media i efterhand
 $itemImages = $quack['images'] ?? [];
 if (empty($itemImages) && !isset($quack['images'])) {
     global $dbconn;
@@ -23,15 +26,16 @@ if (empty($itemImages) && !isset($quack['images'])) {
 }
 
 global $images;
-$images = $itemImages;
+$images = $itemImages; // Exporterar bilderna till en global variabel så att bildmodalen i quack.php når dem
 
 $isSinglePage = (basename($_SERVER['PHP_SELF']) === 'quack.php');
 
-// Dynamiska klasser baserat på sida
+// Dynamiska klasser baserat på om användaren är i flödet eller på inläggets detaljsida
 $cardClass = $isSinglePage ? 'p-4 rounded shadow' : 'p-3 rounded shadow-sm mb-3 quack-card-clickable cursor-pointer';
 $textClass = $isSinglePage ? 'fs-4' : 'fs-5';
 
-// Kollar om klicket träffar en länk, en svg eller ligger inuti en interaktions-ikon (.action-icon)
+// Gör hela kortet klickbart för att navigera till detaljsidan.
+// target.closest() ser till att klicket IGNORERAS om användaren klickar på en länk, knapp eller interaktionsikon.
 $cardClickAction = !$isSinglePage ? "onclick=\"
     const target = event.target;
     if (
@@ -49,7 +53,7 @@ $cardClickAction = !$isSinglePage ? "onclick=\"
 <div class="quack-card bg-white <?= $cardClass ?>" <?= $cardClickAction ?>>
     <?php if($isRequack) : ?>
         <div class="text-muted small mb-2 ms-5 fw-bold">
-            <svg class="quack-icon" fill="#000000" width="16" height="16" viewBox="0 0 20 20" xmlns="http://w3.org">
+            <svg class="quack-icon" fill="#000000" width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                 <path d="M5 4a2 2 0 0 0-2 2v6H0l4 4 4-4H5V6h7l2-2H5zm10 4h-3l4-4 4 4h-3v6a2 2 0 0 1-2 2H6l2-2h7V8z"></path>
             </svg>
             <a href="profile.php?id=<?= $quack['user_id'] ?>" class="text-muted text-decoration-none hover-underline">
@@ -70,7 +74,7 @@ $cardClickAction = !$isSinglePage ? "onclick=\"
                 <a href="profile.php?id=<?= $display['user_id'] ?>" class="text-decoration-none text-dark d-flex align-items-center gap-2">
                     <?php if ($isSinglePage): ?>
                         <div>
-                            <h5 class="fw-bold mb-0"><?= htmlspecialchars($display['display_name']) ?></h5>
+                            <div class="h5 fw-bold mb-0"><?= htmlspecialchars($display['display_name']) ?></div>
                             <p class="text-muted small mb-0">@<?= htmlspecialchars($display['username']) ?></p>
                         </div>
                     <?php else: ?>
@@ -89,6 +93,7 @@ $cardClickAction = !$isSinglePage ? "onclick=\"
                 <p class="mt-2 mb-0 <?= $textClass ?>">
                     <?php
                     $safeContent = htmlspecialchars($display['content'] ?? '');
+                    // REGEX: Hittar alla ord som börjar med # och gör om dem till klickbara hashtags automatiskt
                     $formattedContent = preg_replace(
                         '/#(\w+)/u', 
                         '<a href="search.php?query=%23$1" class="hashtag-link">#$1</a>', 
@@ -98,7 +103,7 @@ $cardClickAction = !$isSinglePage ? "onclick=\"
                     ?>
                 </p>
 
-                <!-- Bild- och videogalleri -->
+                <!-- Bild- och videogalleri  (Anpassar CSS-grid dynamiskt efter antal filer) -->
                 <?php if (!empty($itemImages)) : 
                     $imgCount = count($itemImages);
                     $gridClass = ($imgCount > 4) ? 'grid-4' : 'grid-' . $imgCount;

@@ -45,7 +45,7 @@ document.addEventListener('click', function (e) {
                 }
             });
 
-            // 2. Uppdatera siffror live baserat på vilken sida vi står på
+            // Uppdatera siffror live baserat på vilken sida vi står på
             const followerCountEl = document.getElementById('follower-count');
             const followingCountEl = document.getElementById('following-count');
             

@@ -30,10 +30,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
                 $stmtNotif->execute([$quackOwnerId, $userId, $quackId]);
             }
         } catch (PDOException $e) {
-            
+            // TYST FELHANTERING: Om ett databasfel inträffar sväljer vi felet här.
+            // Detta förhindrar att användaren möts av en vit skärm med rå kod, 
+            // och låter istället skriptet löpa vidare till omdirigeringen (redirect) nedan.
+        }
         }
     }
-}
 
 // Om anropet kom via AJAX (fetch) kommer webbläsaren ignorera denna redirect,
 // men behåller den som säkerhetsåtgärd för vanliga formulärposter.

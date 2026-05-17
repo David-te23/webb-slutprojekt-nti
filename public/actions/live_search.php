@@ -14,26 +14,30 @@ try {
         exit;
     }
 
+    //Omsluter söksträngen med % (t.ex. "%sök%") så att databasen 
+    // hittar matchningar oavsett var i texten eller namnet ordet dyker upp.
     $searchTerm = "%" . $query . "%";
     $response = ['users' => [], 'quacks' => []];
 
-    // Sök efter användare
+    // SÖK ANVÄNDARE: Hittar profiler baserat på användarnamn eller visningsnamn (max 5 resultat för snabbhet)
     $userStmt = $dbconn->prepare("SELECT id, username, display_name, profile_image FROM users WHERE username LIKE :search OR display_name LIKE :search LIMIT 5");
     $userStmt->execute(['search' => $searchTerm]);
     $response['users'] = $userStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Sök efter Quacks
+    // SÖK INLÄGG: Hittar quacks baserat på textinnehåll och kopplar på sändarens profilinfo via en JOIN
     $quackStmt = $dbconn->prepare("SELECT q.id, q.content, u.username, u.display_name, u.profile_image FROM quacks q JOIN users u ON q.user_id = u.id WHERE q.content LIKE :search LIMIT 5");
     $quackStmt->execute(['search' => $searchTerm]);
     $response['quacks'] = $quackStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Skickar tillbaka en sammanslagen array med både användare och inlägg som JSON
     echo json_encode($response);
 
 } catch (Throwable $e) {
+    // Om något kraschar skickas statuskod 500 (Internal Server Error) och ett säkert, generellt felmeddelande
     http_response_code(500);
     echo json_encode([
         'error' => true,
-        'message' => 'Ett internt fel uppstod vid sökningen.',
+        'message' => 'An internal error occured during search.',
         'users' => [],
         'quacks' => []
     ]);

@@ -8,26 +8,32 @@ function setupLiveSearch(inputId, resultsId) {
     const resultsDropdown = document.getElementById(resultsId);
     if (!searchInput || !resultsDropdown) return;
 
+    // DEBOUNCE-LOGIK: Håller reda på timern för sökfördröjningen
     let debounceTimeout;
 
     searchInput.addEventListener("input", () => {
+        // Rensar föregående timer så fort användaren trycker på en ny tangent
         clearTimeout(debounceTimeout);
         const query = searchInput.value.trim();
 
+        // Skicka inga tomma eller extremt korta sökningar till servern
         if (query.length < 2) {
             resultsDropdown.innerHTML = "";
             resultsDropdown.style.display = "none";
             return;
         }
 
+         // DEBOUNCE: Väntar 300ms efter att användaren har slutat skriva innan AJAX-anropet görs.
+        // Detta förhindrar att servern bombarderas med databasfrågor vid varje enskilt knapptryck.
         debounceTimeout = setTimeout(() => {
+            // encodeURIComponent ser till att specialtecken (som t.ex. # eller åäö) kodas säkert i URL:en
             fetch(`actions/live_search.php?query=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     renderResults(data, resultsDropdown);
                 })
                 .catch(err => console.error("Search error:", err));
-        }, 300); // Vänta 300ms efter att användaren slutat skriva
+        }, 300);
     });
 
     // Stäng rullgardinsmenyn om användaren klickar utanför sökrutan
@@ -39,7 +45,7 @@ function setupLiveSearch(inputId, resultsId) {
 }
 
 function renderResults(data, container) {
-    container.innerHTML = "";
+    container.innerHTML = ""; // Rensar gammalt sökresultat
     let hasResults = false;
 
     // Bygg Användarresultat
@@ -55,6 +61,7 @@ function renderResults(data, container) {
             item.className = "search-item";
             item.href = `profile.php?id=${user.id}`;
             
+            // Fallback om användaren inte har laddat upp en egen profilbild
             const hasCustomImg = user.profile_image && 
                      user.profile_image !== 'default_pfp.jpg' && 
                      user.profile_image.trim() !== '';
@@ -63,6 +70,7 @@ function renderResults(data, container) {
                 ? `../uploads/pfp/${user.profile_image}` 
                 : `images/default_pfp.jpg`;
 
+            // All text körs genom escapeHtml() för att stoppa lagrad XSS
             item.innerHTML = `
                 <img src="${imgPath}" alt="">
                 <div>
@@ -87,6 +95,7 @@ function renderResults(data, container) {
             item.className = "search-item";
             item.href = `quack.php?id=${quack.id}`; // Länk till det specifika inlägget
             
+            // text-truncate ser till att långa inlägg inte förstör dropdown-designen
             item.innerHTML = `
                 <div>
                     <span class="text-muted"><strong>${escapeHtml(quack.display_name)}</strong> @${escapeHtml(quack.username)}</span>
@@ -97,6 +106,7 @@ function renderResults(data, container) {
         });
     }
 
+    // Växlar synlighet på rullgardinsmenyn baserat på om det blev träff eller inte
     if (hasResults) {
         container.style.display = "block";
     } else {
